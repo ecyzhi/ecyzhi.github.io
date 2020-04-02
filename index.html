@@ -47,10 +47,6 @@
     </style>
 
     <script>
-        // var originalPoints;
-        // var currentPoints;
-        // var betAmount = 0;
-
         var cardNumber = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
         var cardSuit = ["&spades;", "&hearts;", "&clubs;", "&diams;"];
         var dealerCard = [];
@@ -61,33 +57,6 @@
         var playerCardValue = [];
 
         var end = false;
-
-        // function bet(amount) {
-        //     if (amount == "All") {
-        //         currentPoints = 0;
-        //         betAmount = parseInt(document.getElementById("MemberPoints").value);
-        //         document.getElementById("txtPoints").value = currentPoints;
-        //         document.getElementById("txtBet").value = betAmount;
-        //     }
-        //     else if (amount == "Undo") {
-        //         currentPoints = parseInt(document.getElementById("MemberPoints").value);
-        //         betAmount = 0;
-        //         document.getElementById("txtPoints").value = currentPoints;
-        //         document.getElementById("txtBet").value = betAmount;
-        //     }
-        //     else {
-        //         var check = parseInt(amount);
-        //         currentPoints = parseInt(document.getElementById("MemberPoints").value);
-        //         if ((betAmount + check) > currentPoints)
-        //             alert("BET AMOUNT EXCEEDING POINTS AVAILABLE!");
-        //         else {
-        //             betAmount += check;
-        //             currentPoints -= betAmount;
-        //             document.getElementById("txtPoints").value = currentPoints;
-        //             document.getElementById("txtBet").value = betAmount;
-        //         }
-        //     }
-        // }
 
         function deal() {
             var randomCard;
@@ -263,28 +232,6 @@
     <h1>&spades; &hearts; BlackJack &clubs; &diams;</h1>
 
     <form method="post">
-        <!-- <table id="BetAmount" align="center">
-            <tr>
-                <th><input type="text" id="txtName" value="XiaoMi" /><input type="text" id="txtPoints" value="1000" />
-                    </td>
-            </tr>
-            <tr>
-                <th>Select Bet Amount:</th>
-            </tr>
-            <tr>
-                <th>
-                    <input type="button" id="b50" value="50" onclick="bet('50')" />
-                    <input type="button" id="b100" value="100" onclick="bet('100')" />
-                    <input type="button" id="b500" value="500" onclick="bet('500')" />
-                    <input type="button" id="bAll" value="All" onclick="bet('All')" />
-                    <input type="button" id="bUndo" value="Undo" onclick="bet('Undo')" />
-                </th>
-            </tr>
-            <tr>
-                <th><input type="text" id="txtBet" /></th>
-            </tr>
-        </table> -->
-
         <hr />
 
         <table id="BlackJackGame" align="center">
@@ -316,11 +263,11 @@
         </table>
 
         <hr />
-
-        <!-- <input type="hidden" id="MemberPoints" value="1000" /> -->
+        
         <div id="divBtnSave">
-            <input type="submit" id="Save" value="Save" class="btn btn-primary" />
+            <input type="button" value="New Game" onclick="window.location.reload();" />
         </div>
+
     </form>
 </body>
 
