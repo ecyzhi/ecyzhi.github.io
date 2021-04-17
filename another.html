@@ -2,11 +2,112 @@
 <html>
 
 <head>
-    <title>Another page</title>
+    <title>BT21</title>
+
+    <style>
+        #board {
+            border: 1px solid black;
+        }
+
+        .box {
+            width: 100px;
+            height: 100px;
+            margin: 3px;
+            padding: 3px;
+        }
+
+        .box-img {
+            width: 40%;
+            height: 40%;
+            object-fit: cover;
+            border-radius: 10%;
+            z-index: -1;
+        }
+    </style>
+
+    <!-- <script type="text/javascript" src="another.js"></script> -->
+
+    <script>
+        var runeImg = ['./img/img_b.jpg', './img/img_c.jpg', './img/img_k.jpg', './img/img_m.jpg', './img/img_o.jpg',
+            './img/img_r.jpg', './img/img_s.jpg', './img/img_t.jpg'];
+
+        window.onload = function () {
+            for (i = 1; i <= 30; i++) {
+                document.getElementById('img_' + i).src = runeImg[parseInt(1 + Math.random() * 7)];
+            }
+        }
+
+        function Init(id) {
+
+        }
+
+        function dragStart(event) {
+            event.dataTransfer.setData("Rune", event.target.id);
+            event.dataTransfer.setData("OriginalBox", event.target.parentNode.id);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            var clone = event.target.cloneNode(true);
+            var data = event.dataTransfer.getData("Rune");
+            var OriginalBox = event.dataTransfer.getData("OriginalBox");
+            event.target.replaceChild(document.getElementById(data), event.target.firstChild);
+            document.getElementById(OriginalBox).appendChild(clone.firstChild);
+        }
+    </script>
 </head>
 
 <body>
-    <h1>Another.html</h1>
+    <h1>BT21</h1>
+
+    <table id="board">
+        <tr>
+            <td class="box" id="box_1" ondragover="allowDrop(event)" ondrop="drop(event)"><img class="box-img"
+                    id="img_1" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)"></td>
+            <td class="box" id="box_2" ondragover="allowDrop(event)" ondrop="drop(event)"><img class="box-img"
+                    id="img_2" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)"></td>
+            <td class="box" id="box_3"><img class="box-img" id="img_3" src="./img/img_b.jpg" onload="Init(3)"></td>
+            <td class="box" id="box_4"><img class="box-img" id="img_4" src="./img/img_b.jpg" onload="Init(4)"></td>
+            <td class="box" id="box_5"><img class="box-img" id="img_5" src="./img/img_b.jpg" onload="Init(5)"></td>
+            <td class="box" id="box_6"><img class="box-img" id="img_6" src="./img/img_b.jpg" onload="Init(6)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_7"><img class="box-img" id="img_7" src="./img/img_b.jpg" onload="Init(7)"></td>
+            <td class="box" id="box_8"><img class="box-img" id="img_8" src="./img/img_b.jpg" onload="Init(8)"></td>
+            <td class="box" id="box_9"><img class="box-img" id="img_9" src="./img/img_b.jpg" onload="Init(9)"></td>
+            <td class="box" id="box_10"><img class="box-img" id="img_10" src="./img/img_b.jpg" onload="Init(10)"></td>
+            <td class="box" id="box_11"><img class="box-img" id="img_11" src="./img/img_b.jpg" onload="Init(11)"></td>
+            <td class="box" id="box_12"><img class="box-img" id="img_12" src="./img/img_b.jpg" onload="Init(12)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_13"><img class="box-img" id="img_13" src="./img/img_b.jpg" onload="Init(13)"></td>
+            <td class="box" id="box_14"><img class="box-img" id="img_14" src="./img/img_b.jpg" onload="Init(14)"></td>
+            <td class="box" id="box_15"><img class="box-img" id="img_15" src="./img/img_b.jpg" onload="Init(15)"></td>
+            <td class="box" id="box_16"><img class="box-img" id="img_16" src="./img/img_b.jpg" onload="Init(16)"></td>
+            <td class="box" id="box_17"><img class="box-img" id="img_17" src="./img/img_b.jpg" onload="Init(17)"></td>
+            <td class="box" id="box_18"><img class="box-img" id="img_18" src="./img/img_b.jpg" onload="Init(18)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_19"><img class="box-img" id="img_19" src="./img/img_b.jpg" onload="Init(19)"></td>
+            <td class="box" id="box_20"><img class="box-img" id="img_20" src="./img/img_b.jpg" onload="Init(20)"></td>
+            <td class="box" id="box_21"><img class="box-img" id="img_21" src="./img/img_b.jpg" onload="Init(21)"></td>
+            <td class="box" id="box_22"><img class="box-img" id="img_22" src="./img/img_b.jpg" onload="Init(22)"></td>
+            <td class="box" id="box_23"><img class="box-img" id="img_23" src="./img/img_b.jpg" onload="Init(23)"></td>
+            <td class="box" id="box_24"><img class="box-img" id="img_24" src="./img/img_b.jpg" onload="Init(24)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_25"><img class="box-img" id="img_25" src="./img/img_b.jpg" onload="Init(25)"></td>
+            <td class="box" id="box_26"><img class="box-img" id="img_26" src="./img/img_b.jpg" onload="Init(26)"></td>
+            <td class="box" id="box_27"><img class="box-img" id="img_27" src="./img/img_b.jpg" onload="Init(27)"></td>
+            <td class="box" id="box_28"><img class="box-img" id="img_28" src="./img/img_b.jpg" onload="Init(28)"></td>
+            <td class="box" id="box_29"><img class="box-img" id="img_29" src="./img/img_b.jpg" onload="Init(29)"></td>
+            <td class="box" id="box_30"><img class="box-img" id="img_30" src="./img/img_b.jpg" onload="Init(30)"></td>
+        </tr>
+    </table>
 </body>
 
 </html>
