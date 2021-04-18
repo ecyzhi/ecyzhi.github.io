@@ -1,96 +1,77 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-    <title>BlackJack</title>
+    <title>BT21</title>
 
     <style>
-        #BlackJackGame {
-            border: 1px;
+        #board {
+            border: 1px solid black;
         }
 
-        table {
-            text-align: center;
+        .box {
+            width: 100px;
+            height: 100px;
+            margin: 3px;
+            padding: 3px;
         }
 
-        #divBtnSave {
-            text-align: center;
-        }
-
-        .gameBtn {
-            width: 80px;
-            height: 40px;
-        }
-
-        .BlackCard {
-            color: black;
-        }
-
-        .RedCard {
-            color: red;
-        }
-
-        #thDealerCard {
-            height: 50px;
-        }
-
-        #thPlayerCard {
-            height: 50px;
-        }
-
-        #btnHit {
-            visibility: hidden;
-        }
-
-        #btnStand {
-            visibility: hidden;
+        .box-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10%;
         }
     </style>
 
-    <script type="text/javascript" src="black-jack.js"></script>
+    <script type="text/javascript" src="bt21.js"></script>
 </head>
 
 <body>
-    <h1>&spades; &hearts; BlackJack &clubs; &diams;</h1>
+    <h1>BT21</h1>
 
-    <form method="post">
-        <hr />
-
-        <table id="BlackJackGame" align="center">
-            <tr>
-                <th colspan="3" id="dealerName">Dealer's Card</th>
-            </tr>
-            <tr>
-                <th id="thDealerCard" colspan="3"> </th>
-            </tr>
-            <tr>
-                <th id="thDealerValue" colspan="3"> </th>
-            </tr>
-
-            <tr>
-                <th><input type="button" id="btnHit" value="Hit" class="gameBtn" onclick="hit();" /></th>
-                <th><input type="button" id="btnDeal" value="Deal" class="gameBtn" onclick="deal();" /></th>
-                <th><input type="button" id="btnStand" value="Stand" class="gameBtn" onclick="stand();" /></th>
-            </tr>
-
-            <tr>
-                <th id="thPlayerValue" colspan="3"> </th>
-            </tr>
-            <tr>
-                <th id="thPlayerCard" colspan="3"> </th>
-            </tr>
-            <tr>
-                <th colspan="3" id="playerName">Your Card</th>
-            </tr>
-        </table>
-
-        <hr />
-
-        <div id="divBtnSave">
-            <input type="button" onclick="location.reload();" value="New Game" />
-        </div>
-
-    </form>
-
+    <table id="board">
+        <tr>
+            <td class="box" id="box_1"><img class="box-img" id="img_1" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_2"><img class="box-img" id="img_2" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_3"><img class="box-img" id="img_3" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_4"><img class="box-img" id="img_4" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_5"><img class="box-img" id="img_5" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_6"><img class="box-img" id="img_6" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_7"><img class="box-img" id="img_7" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_8"><img class="box-img" id="img_8" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_9"><img class="box-img" id="img_9" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_10"><img class="box-img" id="img_10" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_11"><img class="box-img" id="img_11" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_12"><img class="box-img" id="img_12" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_13"><img class="box-img" id="img_13" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_14"><img class="box-img" id="img_14" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_15"><img class="box-img" id="img_15" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_16"><img class="box-img" id="img_16" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_17"><img class="box-img" id="img_17" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_18"><img class="box-img" id="img_18" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_19"><img class="box-img" id="img_19" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_20"><img class="box-img" id="img_20" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_21"><img class="box-img" id="img_21" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_22"><img class="box-img" id="img_22" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_23"><img class="box-img" id="img_23" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_24"><img class="box-img" id="img_24" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+        </tr>
+        <tr>
+            <td class="box" id="box_25"><img class="box-img" id="img_25" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_26"><img class="box-img" id="img_26" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_27"><img class="box-img" id="img_27" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_28"><img class="box-img" id="img_28" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_29"><img class="box-img" id="img_29" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+            <td class="box" id="box_30"><img class="box-img" id="img_30" src="./img/img_b.jpg" draggable="true" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)"></td>
+        </tr>
+    </table>
 </body>
 
 </html>
