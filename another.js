@@ -24,7 +24,12 @@ function drop(event) {
     event.preventDefault();
     var clone = event.target.cloneNode(true);
     var data = event.dataTransfer.getData("Rune");
-    var OriginalBox = event.dataTransfer.getData("OriginalBox");
+    var OriginalBoxId = event.dataTransfer.getData("OriginalBox");
     event.target.parentNode.replaceChild(document.getElementById(data), event.target);
-    document.getElementById(OriginalBox).appendChild(clone);
+
+    var OriginalBox = document.getElementById(OriginalBoxId);
+    if (OriginalBox.children.length != 0)
+        OriginalBox.replaceChild(clone, OriginalBox.firstChild);
+    else
+        OriginalBox.appendChild(clone);
 }
