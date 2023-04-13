@@ -26,8 +26,8 @@
                 <a href="#" class="closebtn" onclick="closeNav()">&times;</a>
                 <ul>
                     <li class="menu-item"><a href="#" onclick="closeNav()">About</a></li>
-                    <li class="menu-item"><a href="#" onclick="closeNav()">Skills</a></li>
-                    <li class="menu-item"><a href="#" onclick="closeNav()">Experiences</a></li>
+                    <li class="menu-item"><a href="#skills" onclick="closeNav()">Skills</a></li>
+                    <li class="menu-item"><a href="#experience" onclick="closeNav()">Experiences</a></li>
                     <li class="menu-item"><a href="#" onclick="closeNav()">Works</a></li>
                     <li class="menu-item"><a href="#" onclick="closeNav()">Contact</a></li>
                 </ul>
@@ -41,8 +41,8 @@
             <nav>
                 <ul class="menu">
                     <li class="menu-item"><a href="#">About</a></li>
-                    <li class="menu-item"><a href="#">Skills</a></li>
-                    <li class="menu-item"><a href="#">Experiences</a></li>
+                    <li class="menu-item"><a href="#skills">Skills</a></li>
+                    <li class="menu-item"><a href="#experience">Experiences</a></li>
                     <li class="menu-item"><a href="#">Works</a></li>
                     <li class="menu-item"><a href="#">Contact</a></li>
                 </ul>
@@ -52,7 +52,8 @@
         <div class="contact">
             <div class="vertical-line"></div>
             <a href="https://github.com/ecyzhi"><i class="feather contact-icon" data-feather="github"></i></a>
-            <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather contact-icon" data-feather="linkedin"></i></a>
+            <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather contact-icon"
+                    data-feather="linkedin"></i></a>
             <div class="vertical-line"></div>
         </div>
 
@@ -67,12 +68,39 @@
                         focused on building mobile and web applications. </p>
                 </div>
 
-                <div class="content-card experience">
+                <div id="skills" class="content-card skills">
+                    <h1>Skills & Tools</h1>
+                    <div class="skills-wrapper">
+                        <div class="skills-box">
+                            <h2>Skills</h2>
+                            <ul>
+                                <li>Flutter</li>
+                                <li>HTML & CSS</li>
+                                <li>Javascript</li>
+                                <li>.NET</li>
+                                <li>SQL</li>
+                            </ul>
+                        </div>
+                        <div class="skills-box">
+                            <h2>Tools</h2>
+                            <ul>
+                                <li>Visual Studio</li>
+                                <li>Visual Studio Code</li>
+                                <li>Android Studio</li>
+                                <li>Sourcetree</li>
+                                <li>Github</li>
+                                <li>JIRA</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="experience" class="content-card experience">
                     <h1>Experiences</h1>
                     <div class="timeline-wrapper">
                         <ul class="timeline">
                             <li>
-                                <details class="panel">
+                                <details class="panel" open>
                                     <summary>Software Engineer (Backend) @ Nettium</summary>
                                     <p class="employment-period">Feb 2020 - Jun 2021</p>
                                     <ul class="experience-li">
@@ -87,7 +115,7 @@
                                 </details>
                             </li>
                             <li>
-                                <details class="panel">
+                                <details class="panel" open>
                                     <summary>Software Developer II (Frontend) @ vimigo Technologies</summary>
                                     <p class="employment-period">July 2021 - Jun 2022</p>
                                     <ul class="experience-li">
@@ -100,7 +128,7 @@
                                 </details>
                             </li>
                             <li>
-                                <details class="panel">
+                                <details class="panel" open>
                                     <summary>Senior Software Design Engineer I (Frontend) @ vimigo Technologies
                                     </summary>
                                     <p class="employment-period">July 2022 - Feb 2023</p>
@@ -116,14 +144,6 @@
                                 </details>
                             </li>
                         </ul>
-                    </div>
-                </div>
-
-                <div class="content-card skills">
-                    <h1>Skills & Tools</h1>
-                    <div class="skills-wrapper">
-                        <div class="skills-box">Skills</div>
-                        <div class="tools-box">Tools</div>
                     </div>
                 </div>
             </div>

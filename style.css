@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: 'Lato', sans-serif;
     color: #F1F1F1;
@@ -33,7 +37,7 @@ header {
 }
 
 .logo {
-    width: 200px;
+    width: 180px;
     filter: #F1F1F1;
 }
 
@@ -53,7 +57,7 @@ header {
 }
 
 .menu-item a:hover {
-    text-decoration: underline;
+    color: #cce66e;
 }
 
 main {
@@ -109,8 +113,9 @@ main {
 }
 
 .content-card {
-    max-width: 600px;
+    max-width: 800px;
     margin: 20px;
+    scroll-margin-top: 100px;
 }
 
 .name {
@@ -118,6 +123,14 @@ main {
     font-size: 56px;
     font-weight: 900;
     color: #cce66e;
+}
+
+.about {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    height: calc(100vh - 180px);
 }
 
 .about p {
@@ -181,7 +194,7 @@ main {
     font-size: 20px;
 }
 
-h1 {
+h1, h2 {
     color: #cce66e;
 }
 
@@ -200,13 +213,11 @@ h1 {
 .timeline {
     list-style: none;
     padding: 20px 0 0 0;
-    position: relative;
     width: 100%;
 }
 
 .timeline>li {
     margin-bottom: 30px;
-    position: relative;
     display: flex;
 }
 
@@ -215,7 +226,6 @@ h1 {
     margin-left: 40px;
     border-radius: 10px;
     overflow: hidden;
-    position: relative;
     background: #272727;
 }
 
@@ -243,29 +253,17 @@ h1 {
     background: #444444;
 }
 
-.timeline:before {
-    top: 0;
-    bottom: 0;
-    left: 15px;
-    position: absolute;
-    content: "";
-    width: 5px;
-    background-color: #303030;
-}
-
 .timeline>li:before {
     content: "";
     width: 25px;
     height: 25px;
     border-radius: 50%;
-    position: absolute;
-    top: 18px;
-    left: 15px;
     background: #303030;
     margin-left: -11px;
+    margin-top: 15px;
 }
 
-*/ .employment-period {
+.employment-period {
     font-size: 16px;
     font-weight: 300;
     color: #bdbdbd;
@@ -290,18 +288,29 @@ h1 {
 .skills-wrapper {
     display: flex;
     margin: 20px 0;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.skills-wrapper ul {
+    list-style: none;
+    margin-top: 20px;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .skills-box {
-    background-color: orange;
+    background: #272727;
     flex: 1;
-}
+    border-radius: 10px;
+    padding: 20px;
 
-.tools-box {
-    background-color: blue;
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-
 
 @media only screen and (max-width: 960px) {
     header {
@@ -326,6 +335,10 @@ h1 {
 
     main {
         padding-left: 0;
+    }
+
+    .skills-wrapper {
+        flex-direction: column;
     }
 }
 
