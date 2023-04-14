@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcySpace</title>
+    <title>EcyZhi</title>
 
     <link rel="stylesheet" href="style.css">
     <link
@@ -28,12 +28,12 @@
                     <li class="menu-item"><a href="#" onclick="closeNav()">About</a></li>
                     <li class="menu-item"><a href="#skills" onclick="closeNav()">Skills</a></li>
                     <li class="menu-item"><a href="#experience" onclick="closeNav()">Experiences</a></li>
-                    <li class="menu-item"><a href="#" onclick="closeNav()">Works</a></li>
-                    <li class="menu-item"><a href="#" onclick="closeNav()">Contact</a></li>
+                    <li class="menu-item"><a href="#works" onclick="closeNav()">Works</a></li>
+                    <li class="menu-item"><a href="#contact" onclick="closeNav()">Contact</a></li>
                 </ul>
-                <div class="side-contact">
-                    <a href="https://github.com/ecyzhi"><i class="feather contact-icon" data-feather="github"></i></a>
-                    <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather contact-icon"
+                <div class="side-social">
+                    <a href="https://github.com/ecyzhi"><i class="feather social-icon" data-feather="github"></i></a>
+                    <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather social-icon"
                             data-feather="linkedin"></i></a>
                 </div>
             </div>
@@ -43,16 +43,16 @@
                     <li class="menu-item"><a href="#">About</a></li>
                     <li class="menu-item"><a href="#skills">Skills</a></li>
                     <li class="menu-item"><a href="#experience">Experiences</a></li>
-                    <li class="menu-item"><a href="#">Works</a></li>
-                    <li class="menu-item"><a href="#">Contact</a></li>
+                    <li class="menu-item"><a href="#works">Works</a></li>
+                    <li class="menu-item"><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
         </header>
 
-        <div class="contact">
+        <div class="social">
             <div class="vertical-line"></div>
-            <a href="https://github.com/ecyzhi"><i class="feather contact-icon" data-feather="github"></i></a>
-            <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather contact-icon"
+            <a href="https://github.com/ecyzhi"><i class="feather social-icon" data-feather="github"></i></a>
+            <a href="https://www.linkedin.com/in/yeapleezhi/"><i class="feather social-icon"
                     data-feather="linkedin"></i></a>
             <div class="vertical-line"></div>
         </div>
@@ -78,7 +78,6 @@
                                 <li>HTML & CSS</li>
                                 <li>Javascript</li>
                                 <li>.NET</li>
-                                <li>SQL</li>
                             </ul>
                         </div>
                         <div class="skills-box">
@@ -87,7 +86,9 @@
                                 <li>Visual Studio</li>
                                 <li>Visual Studio Code</li>
                                 <li>Android Studio</li>
+                                <li>Firebase</li>
                                 <li>Sourcetree</li>
+                                <li>Postman</li>
                                 <li>Github</li>
                                 <li>JIRA</li>
                             </ul>
@@ -144,6 +145,50 @@
                                 </details>
                             </li>
                         </ul>
+                    </div>
+                </div>
+
+                <div id="works" class="content-card works">
+                    <h1>Works</h1>
+                    <div class="works-wrapper">
+                        <a class="works-box-link" href="#">
+                            <div class="works-box">
+
+                                <h2>AI Tee</h2>
+                                <p>A mobile application that allows user to enter their idea of an image and edit on a
+                                    T-shirt design. AI generated images by using OpenAI DallE API and payment gateway
+                                    connected with Stripe.
+                                </p>
+                                <ul>
+                                    <li>Flutter</li>
+                                    <li>Android</li>
+                                    <li>iOS</li>
+                                    <li>Firebase</li>
+                                </ul>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="contact" class="content-card contact">
+                    <h1>Contact</h1>
+                    <div class="contact-wrapper">
+                        <p>I'm interested in any freelance or full-time opportunities. Feel free to contact me through
+                            my social account or fill in the form below.</p>
+                        <form class="contact-form" action="" method="post">
+                            <div class="contact-personal">
+                                <input type="text" id="contact-name" name="contact-name" class="contact-input"
+                                    placeholder="Name">
+                                <input type="text" id="contact-email" name="contact-email" class="contact-input"
+                                    placeholder="E-mail">
+                            </div>
+                            <input type="text" id="contact-subject" name="contact-subject" class="contact-input"
+                                placeholder="Subject">
+                            <textarea id="contact-message" name="contact-message" rows="10" style="resize: none;"
+                                class="contact-input" placeholder="Message"></textarea>
+
+                            <input type="submit" value="Send" id="contact-submit" class="primary-btn">
+                        </form>
                     </div>
                 </div>
             </div>

@@ -36,6 +36,10 @@ header {
     width: 100%;
 }
 
+.h20 {
+    width: 20px;
+}
+
 .logo {
     width: 180px;
     filter: #F1F1F1;
@@ -90,12 +94,12 @@ main {
     color: #cce66e;
 }
 
-.contact-icon:hover {
+.social-icon:hover {
     scale: 1.5;
     transition: 0.3s;
 }
 
-.contact {
+.social {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -116,6 +120,10 @@ main {
     max-width: 800px;
     margin: 20px;
     scroll-margin-top: 100px;
+
+    display: flex;
+    width: 100%;
+    flex-direction: column;
 }
 
 .name {
@@ -126,9 +134,6 @@ main {
 }
 
 .about {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
     justify-content: center;
     height: calc(100vh - 180px);
 }
@@ -183,7 +188,7 @@ main {
     font-size: 25px;
 }
 
-.side-contact {
+.side-social {
     padding: 30px;
     display: flex;
     justify-content: center;
@@ -194,14 +199,9 @@ main {
     font-size: 20px;
 }
 
-h1, h2 {
+h1,
+h2 {
     color: #cce66e;
-}
-
-.experience {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
 }
 
 .timeline-wrapper {
@@ -279,12 +279,6 @@ h1, h2 {
     padding: 10px 20px;
 }
 
-.skills {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-}
-
 .skills-wrapper {
     display: flex;
     margin: 20px 0;
@@ -295,15 +289,16 @@ h1, h2 {
 .skills-wrapper ul {
     list-style: none;
     margin-top: 20px;
-    
+
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .skills-box {
-    background: #272727;
     flex: 1;
+
+    background: #272727;
     border-radius: 10px;
     padding: 20px;
 
@@ -311,6 +306,91 @@ h1, h2 {
     flex-direction: column;
     align-items: center;
 }
+
+.works-wrapper {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.works-box {
+    background-color: #272727;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.works-box-link {
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.works-box-link:link,
+.works-box-link:visited,
+.works-box-link:hover {
+    color: #F1F1F1;
+    text-decoration: none;
+}
+
+.works-box-link:hover {
+    scale: 1.01;
+    transition: 0.1s;
+}
+
+.works-box ul {
+    list-style: none;
+    margin-top: 20px;
+
+    display: flex;
+    gap: 5px;
+}
+
+.works-box li {
+    background-color: #444444;
+    padding: 2px 8px;
+    border-radius: 5px;
+}
+
+.contact-wrapper p {
+    margin: 20px 0 40px 0;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-form .primary-btn {
+    align-self: center;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background-color: #444444;
+    color: #F1F1F1;
+    cursor: pointer;
+    border: none;
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+.contact-personal {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.contact-input {
+    flex: 1;
+
+    padding: 10px;
+    font-size: 16px;
+    margin-top: 10px;
+
+    background-color: #444444;
+    color: #F1F1F1;
+    border: none;
+}
+
 
 @media only screen and (max-width: 960px) {
     header {
@@ -329,7 +409,7 @@ h1, h2 {
         display: flex;
     }
 
-    .contact {
+    .social {
         display: none;
     }
 
