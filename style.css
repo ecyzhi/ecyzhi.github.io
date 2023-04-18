@@ -308,6 +308,12 @@ h2 {
     align-items: center;
 }
 
+.skills-icon {
+    height: 40px;
+    width: 40px;
+    color: #cce66e;
+}
+
 .works-wrapper {
     margin-top: 20px;
     display: flex;
