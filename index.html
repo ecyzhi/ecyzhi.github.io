@@ -177,23 +177,38 @@
                     <div class="contact-wrapper">
                         <p>I'm interested in any freelance or full-time opportunities. Feel free to contact me through
                             my social account or fill in the form below.</p>
-                        <form class="contact-form" action="" method="post">
+                        <form class="contact-form"
+                            action="http://ecyspace-env.eba-bemjuxnz.ap-southeast-1.elasticbeanstalk.com/api/send_email"
+                            method="post">
                             <div class="contact-personal">
                                 <input type="text" id="contact-name" name="contact-name" class="contact-input"
-                                    placeholder="Name">
+                                    placeholder="Name" required>
                                 <input type="text" id="contact-email" name="contact-email" class="contact-input"
-                                    placeholder="E-mail">
+                                    placeholder="E-mail" required>
                             </div>
                             <input type="text" id="contact-subject" name="contact-subject" class="contact-input"
-                                placeholder="Subject">
+                                placeholder="Subject" required>
                             <textarea id="contact-message" name="contact-message" rows="10" style="resize: none;"
-                                cols="10" class="contact-input" placeholder="Message"></textarea>
+                                cols="10" class="contact-input" placeholder="Message" required></textarea>
 
                             <input type="submit" value="Send" id="contact-submit" class="primary-btn">
                         </form>
                     </div>
                 </div>
-            </div>
+
+                <div id="dialog" class="dialog">
+                    <div class="dialog-content">
+                        <div class="dialog-header">
+                            <h1>Thank you for your message!</h1>
+                        </div>
+                        <div class="dialog-body">
+                            <p>I will get back to you as soon as possible.</p>
+                        </div>
+                        <div class="dialog-button">
+                            <button type="button" class="primary-btn">Close</button>
+                        </div>
+                    </div>
+                </div>
         </main>
 
         <footer>

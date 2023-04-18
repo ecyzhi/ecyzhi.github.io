@@ -18,3 +18,26 @@ const menuItems = document.querySelectorAll(".menu-item > a");
 for (let menuItem of menuItems) {
     menuItem.addEventListener('click', e => { document.querySelector(".sidenav").style.width = "0"; });
 }
+
+function showDialog() {
+    var dialog = document.querySelector('.dialog');
+    dialog.style.display = 'flex';
+}
+
+function hideDialog() {
+    var dialog = document.querySelector('.dialog');
+    dialog.style.display = 'none';
+}
+
+const form = document.querySelector(".contact-form");
+form.addEventListener('submit', e => {
+    e.preventDefault();
+    showDialog();
+    form.submit();
+});
+
+const closeDialogBtn = document.querySelector(".dialog-button .primary-btn");
+closeDialogBtn.addEventListener('click', e => {
+    hideDialog();
+    form.reset();
+});
