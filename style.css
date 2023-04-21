@@ -11,10 +11,17 @@ html {
 body {
     font-family: 'Lato', sans-serif;
     color: #F1F1F1;
+
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("/assets/background/bg-starry.jpg") no-repeat center center fixed;
+    background-color: rgba(0, 0, 0, 0.9);
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
 }
 
 .page {
-    background-color: #212121;
+    /* background-color: #212121; */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -32,8 +39,9 @@ header {
     align-items: center;
     padding: 30px 50px;
     position: fixed;
-    background-color: #212121;
+    /* background-color: #212121; */
     width: 100%;
+    transition: 0.5s;
 }
 
 .h20 {
@@ -429,6 +437,14 @@ h2 {
 
 .dialog-body {
     margin: 20px;
+}
+
+/* .navbar {
+    transition: 0.5s;
+} */
+
+.navbar-scrolled {
+    background-color: #141414e5;
 }
 
 @media only screen and (max-width: 340px) {

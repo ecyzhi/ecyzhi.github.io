@@ -1,0 +1,27 @@
+@import "variables";
+@import "../bootstrap-scss/scss/bootstrap";
+@import "bootswatch";
+
+
+.btn-circle {
+    width: 50px;
+    height: 50px;
+    padding: 2px 2px;
+    border-radius: 35px;
+    font-size: 35px;
+    line-height: 1.33;
+}
+
+section {
+    scroll-margin-top: 190px;
+}
+
+@include media-breakpoint-up(lg) {
+    section {
+        scroll-margin-top: 72px;
+    }
+
+    .feature-image{
+        height: 200px;
+    }
+}

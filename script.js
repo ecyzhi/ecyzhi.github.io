@@ -41,3 +41,25 @@ closeDialogBtn.addEventListener('click', e => {
     hideDialog();
     form.reset();
 });
+
+
+// Navbar change from transparent to solid color on scroll
+// const navbar = document.querySelector(".navbar");
+
+// window.addEventListener('scroll', () => {
+//     if (window.scrollY >= 56) {
+//         navbar.classList.add("navbar-scrolled");
+//     } else {
+//         navbar.classList.remove("navbar-scrolled");
+//     }
+// });
+
+const navbar = document.querySelector("header");
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY >= 56) {
+        navbar.classList.add("navbar-scrolled");
+    } else {
+        navbar.classList.remove("navbar-scrolled");
+    }
+});
