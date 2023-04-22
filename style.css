@@ -330,14 +330,18 @@ h2 {
 }
 
 .works-box {
-    background-color: #272727;
+    background: linear-gradient(to right, #272727, #27272784), url("/assets/works/ai_tee_website_screenshot.jpeg") right / contain no-repeat;
     border-radius: 10px;
     padding: 20px;
 }
 
+.works-box:hover {
+    background: linear-gradient(to right, #272727, #27272700), url("/assets/works/ai_tee_website_screenshot.jpeg") right / contain no-repeat;
+}
+
 .works-box-link {
     text-decoration: none;
-    transition: 0.3s;
+    transition: 0.5s;
 }
 
 .works-box-link:link,
@@ -349,7 +353,6 @@ h2 {
 
 .works-box-link:hover {
     scale: 1.01;
-    transition: 0.1s;
 }
 
 .works-box ul {

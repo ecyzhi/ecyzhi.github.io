@@ -63,3 +63,15 @@ window.addEventListener('scroll', () => {
         navbar.classList.remove("navbar-scrolled");
     }
 });
+
+// // Works box mouseover effect
+// const works = document.querySelectorAll(".works-box");
+// works.forEach(work => {
+//     let pText = work.querySelector("p").innerText;
+//     work.addEventListener('mouseover', () => {
+//         work.querySelector("p").innerText = "Go To Website";
+//     });
+//     work.addEventListener('mouseout', () => {
+//         work.querySelector("p").innerText = pText;
+//     });
+// });
