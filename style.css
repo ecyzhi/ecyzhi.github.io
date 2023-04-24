@@ -216,6 +216,25 @@ h2 {
   color: #cce66e;
 }
 
+.job-wrapper {
+  font-size: 30px;
+  margin: 20px 0;
+}
+
+.job-title {
+  font-size: 30px;
+  font-weight: 900;
+  color: #6ee682;
+  text-shadow: 0 0 5px #6ee682;
+  animation: colorful 12s infinite;
+}
+
+@keyframes colorful {
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
 .timeline-wrapper {
   display: flex;
   justify-content: flex-start;

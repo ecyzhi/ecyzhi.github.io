@@ -18,6 +18,7 @@
 
     <script src="script.js" defer></script>
     <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/typed.js@2.0.15/dist/typed.umd.js"></script>
   </head>
 
   <body>
@@ -69,25 +70,31 @@
       </header>
 
       <div class="social">
-        <div class="vertical-line"></div>
-        <a href="https://github.com/ecyzhi">
+        <div class="vertical-line fade-down no-delay"></div>
+        <a href="https://github.com/ecyzhi" class="fade-in no-delay">
           <i class="feather social-icon" data-feather="github"></i>
         </a>
-        <a href="https://www.linkedin.com/in/yeapleezhi/">
+        <a
+          href="https://www.linkedin.com/in/yeapleezhi/"
+          class="fade-in no-delay"
+        >
           <i class="feather social-icon" data-feather="linkedin"></i>
         </a>
-        <div class="vertical-line"></div>
+        <div class="vertical-line fade-up no-delay"></div>
       </div>
 
       <main>
         <div class="content">
           <div class="content-card about">
-            <p class="fade-in">Hi, I'm</p>
+            <p class="fade-in">Hi, my name is</p>
             <h1 class="name fade-in">Yeap Lee Zhi</h1>
+            <p class="job-wrapper fade-in">
+              I'm a
+              <span class="job-title"></span>
+            </p>
             <p class="fade-in">
-              I'm a software engineer located in Malaysia. I have built several
-              exceptional frontend and backend applications through out my
-              career.
+              Located in Malaysia. I have built several exceptional frontend and
+              backend applications through out my career.
             </p>
             <p class="fade-in">
               I'm passionate about beautiful interfaces and creating intuitive
@@ -311,7 +318,22 @@
     </div>
 
     <script>
+      // feather icons
       feather.replace();
+
+      // Typing animation
+      let typed = new Typed(".job-title", {
+        strings: [
+          "Web Developer",
+          "Mobile Developer",
+          "Backend Developer",
+          "Software Engineer",
+        ],
+        typeSpeed: 50,
+        backSpeed: 50,
+        smartBackspace: true,
+        loop: true,
+      });
     </script>
   </body>
 </html>

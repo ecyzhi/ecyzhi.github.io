@@ -86,7 +86,12 @@ function animateOnScroll() {
                 } else if (entry.target.className.includes('fade-left')) {
                     entry.target.classList.add('animate__animated', 'animate__fadeInLeft');
                 }
-                entry.target.style.animationDelay = `${delay}s`;
+
+                if (entry.target.className.includes('no-delay')) {
+                    entry.target.style.animationDelay = `0s`;
+                } else {
+                    entry.target.style.animationDelay = `${delay}s`;
+                }
             }
         });
     });
