@@ -310,6 +310,16 @@ h2 {
   padding: 10px 20px;
 }
 
+.experience-li a:link,
+.experience-li a:visited {
+  color: #cce66e;
+  text-decoration: none;
+}
+
+.experience-li a:hover {
+  color: #a4b859;
+}
+
 .skills-wrapper {
   display: flex;
   margin: 20px 0;
