@@ -1,375 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EcyZhi</title>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
 
-    <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
-    />
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
 
-    <script src="script.js" defer></script>
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script src="https://unpkg.com/typed.js@2.0.15/dist/typed.umd.js"></script>
-  </head>
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-  <body>
-    <div class="page">
-      <header>
-        <a href="/">
-          <img class="logo" src="assets/logo/logo.svg" alt="Logo" />
-        </a>
-        <a href="#" class="menu-nav">
-          <i class="feather menu-icon" data-feather="menu"></i>
-        </a>
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
 
-        <div class="sidenav">
-          <a href="#" class="closebtn">&times;</a>
-          <ul>
-            <li class="menu-item"><a href="#">About</a></li>
-            <li class="menu-item"><a href="#skills">Skills</a></li>
-            <li class="menu-item"><a href="#experience">Experiences</a></li>
-            <li class="menu-item"><a href="#works">Works</a></li>
-            <li class="menu-item"><a href="#blogs">Blogs</a></li>
-            <li class="menu-item"><a href="#contact">Contact</a></li>
-          </ul>
-          <div class="side-social">
-            <a href="https://github.com/ecyzhi">
-              <i class="feather social-icon" data-feather="github"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/yeapleezhi/">
-              <i class="feather social-icon" data-feather="linkedin"></i>
-            </a>
-          </div>
-        </div>
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
 
-        <nav>
-          <ul class="menu">
-            <li class="menu-item fade-down"><a href="#">About</a></li>
-            <li class="menu-item fade-down">
-              <a href="#skills">Skills</a>
-            </li>
-            <li class="menu-item fade-down">
-              <a href="#experience">Experiences</a>
-            </li>
-            <li class="menu-item fade-down">
-              <a href="#works">Works</a>
-            </li>
-            <li class="menu-item fade-down">
-              <a href="#blogs">Blogs</a>
-            </li>
-            <li class="menu-item fade-down">
-              <a href="#contact">Contact</a>
-            </li>
-          </ul>
-        </nav>
-      </header>
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ecyzhi_flutter">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-      <div class="social">
-        <div class="vertical-line fade-down no-delay"></div>
-        <a href="https://github.com/ecyzhi" class="fade-in no-delay">
-          <i class="feather social-icon" data-feather="github"></i>
-        </a>
-        <a
-          href="https://www.linkedin.com/in/yeapleezhi/"
-          class="fade-in no-delay"
-        >
-          <i class="feather social-icon" data-feather="linkedin"></i>
-        </a>
-        <div class="vertical-line fade-up no-delay"></div>
-      </div>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
 
-      <main>
-        <div class="content">
-          <div class="content-card about">
-            <p class="fade-in">Hello, my name is</p>
-            <h1 class="name fade-in">Yeap Lee Zhi</h1>
-            <p class="job-wrapper fade-in">
-              I'm a
-              <span class="job-title"></span>
-            </p>
-            <p class="fade-in">
-              Located in Malaysia. I have built several exceptional frontend and
-              backend applications through out my career.
-            </p>
-            <p class="fade-in">
-              I'm passionate about beautiful interfaces and creating intuitive
-              user experiences. Currently, I'm focused on building mobile and
-              web applications.
-            </p>
-          </div>
+  <title>ecyzhi_flutter</title>
+  <link rel="manifest" href="manifest.json">
 
-          <div id="skills" class="content-card skills">
-            <h1>Skills & Tools</h1>
-            <div class="skills-wrapper">
-              <div class="skills-box fade-down">
-                <i class="feather skills-icon" data-feather="briefcase"></i>
-                <h2>Skills</h2>
-                <ul>
-                  <li>Flutter</li>
-                  <li>HTML & CSS</li>
-                  <li>Javascript</li>
-                  <li>.NET</li>
-                </ul>
-              </div>
-              <div class="skills-box fade-down">
-                <i class="feather skills-icon" data-feather="tool"></i>
-                <h2>Tools</h2>
-                <ul>
-                  <li>Visual Studio</li>
-                  <li>Visual Studio Code</li>
-                  <li>Android Studio</li>
-                  <li>Firebase</li>
-                  <li>Sourcetree</li>
-                  <li>Postman</li>
-                  <li>Github</li>
-                  <li>JIRA</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div id="experience" class="content-card experience">
-            <h1>Experiences</h1>
-            <div class="timeline-wrapper">
-              <ul class="timeline">
-                <li>
-                  <details class="panel" open>
-                    <summary>Software Engineer (Backend) @ Nettium</summary>
-                    <p class="employment-period">Feb 2020 - Jun 2021</p>
-                    <ul class="experience-li">
-                      <li class="fade-left">
-                        Focus on building .NET API applications which allow
-                        clients to connect to our database through their
-                        dashboard
-                      </li>
-                      <li class="fade-left">
-                        Familiar with Microservice architecture and Domain
-                        Driven Design
-                      </li>
-                      <li class="fade-left">
-                        Used NLog for logging errors and information, Swagger to
-                        test and create documentation for API and Dapper for SQL
-                        query
-                      </li>
-                      <li class="fade-left">
-                        Written stored procedures with Transact-SQL
-                      </li>
-                    </ul>
-                  </details>
-                </li>
-                <li>
-                  <details class="panel" open>
-                    <summary>
-                      Software Developer II (Frontend) @ vimigo Technologies
-                    </summary>
-                    <p class="employment-period">July 2021 - Jun 2022</p>
-                    <ul class="experience-li">
-                      <li class="fade-left">
-                        Responsible in developing a leading performance reward
-                        system,
-                        <a href="https://www.vimigoapp.com/home/"><strong>Vimigo</strong></a>
-                        , which helps in growth of an organisation.
-                      </li>
-                      <li class="fade-left">
-                        Develop both mobile and web applications using Flutter
-                      </li>
-                      <li class="fade-left">
-                        Work independently on frontend to create mobile
-                        application that integrate native SDK for RFID scanner
-                        and collaborate with external backend team
-                      </li>
-                      <li class="fade-left">
-                        Help in refactoring of legacy code to improve
-                        performance of the mobile applications
-                      </li>
-                    </ul>
-                  </details>
-                </li>
-                <li>
-                  <details class="panel" open>
-                    <summary>
-                      Senior Software Design Engineer I (Frontend) @ vimigo
-                      Technologies
-                    </summary>
-                    <p class="employment-period">July 2022 - Feb 2023</p>
-                    <ul class="experience-li">
-                      <li class="fade-left">
-                        Take part in various projects that made used of
-                        uploading files, geolocation and camera related features
-                        using Flutter
-                      </li>
-                      <li class="fade-left">
-                        Handling mobile application deployment
-                      </li>
-                      <li class="fade-left">
-                        Work closely with designer team and QA team to provide
-                        feedback on user experience and clarify requirements
-                      </li>
-                      <li class="fade-left">
-                        Demostrate progress to product owner every sprint as
-                        lead frontend developer of talent acquistion application
-                      </li>
-                    </ul>
-                  </details>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div id="works" class="content-card works">
-            <h1>Works</h1>
-            <div class="works-wrapper">
-              <a class="box-link works-box-link" href="ai_tee/">
-                <div class="box-card works-box fade-up">
-                  <h2>AI Tee</h2>
-                  <p>
-                    A mobile application that allows user to enter their idea of
-                    an image and edit on a T-shirt design. AI generated images
-                    by using OpenAI DallE API and payment gateway connected with
-                    Stripe.
-                  </p>
-                  <ul>
-                    <li>Flutter</li>
-                    <li>Android</li>
-                    <li>iOS</li>
-                    <li>Firebase</li>
-                  </ul>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <div id="blogs" class="content-card blogs">
-            <h1>Blogs</h1>
-            <div class="blogs-wrapper">
-              <a
-                class="box-link blogs-box-link fade-up"
-                href="blogs/spreading_card_animation.html"
-              >
-                <div class="box-card blogs-box">
-                  <img
-                    class="blogs-img"
-                    src="assets/blogs/spreading_card_animation/card_6.gif"
-                    alt="Screenshot of spreading card animation"
-                  />
-                  <h2>Spreading Card Animation</h2>
-                  <p>
-                    An approach to try to implement spreading cards in Flutter
-                    without the use of packages.
-                  </p>
-                  <ul>
-                    <li>Flutter</li>
-                  </ul>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <div id="contact" class="content-card contact">
-            <h1>Contact</h1>
-            <div class="contact-wrapper">
-              <p>
-                I'm interested in any freelance or full-time opportunities. Feel
-                free to contact me through my social account or fill in the form
-                below.
-              </p>
-              <form
-                class="contact-form"
-                action="https://www.ecyzhi.dev/api/send_email"
-                method="post"
-              >
-                <div class="contact-personal">
-                  <input
-                    type="text"
-                    id="contact-name"
-                    name="contact-name"
-                    class="contact-input"
-                    placeholder="Name"
-                    required
-                  />
-                  <input
-                    type="text"
-                    id="contact-email"
-                    name="contact-email"
-                    class="contact-input"
-                    placeholder="E-mail"
-                    required
-                  />
-                </div>
-                <input
-                  type="text"
-                  id="contact-subject"
-                  name="contact-subject"
-                  class="contact-input"
-                  placeholder="Subject"
-                  required
-                />
-                <textarea
-                  id="contact-message"
-                  name="contact-message"
-                  rows="10"
-                  style="resize: none"
-                  cols="10"
-                  class="contact-input"
-                  placeholder="Message"
-                  required
-                ></textarea>
-
-                <input
-                  type="submit"
-                  value="Send"
-                  id="contact-submit"
-                  class="primary-btn"
-                />
-              </form>
-            </div>
-          </div>
-
-          <div id="dialog" class="dialog">
-            <div class="dialog-content">
-              <div class="dialog-header">
-                <h1>Thank you for your message!</h1>
-              </div>
-              <div class="dialog-body">
-                <p>I will get back to you as soon as possible.</p>
-              </div>
-              <div class="dialog-button">
-                <button type="button" class="primary-btn">Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <footer>©2023 ecyzhi.com</footer>
-    </div>
-
-    <script>
-      // feather icons
-      feather.replace();
-
-      // Typing animation
-      let typed = new Typed(".job-title", {
-        strings: [
-          "Web Developer",
-          "Mobile Developer",
-          "Backend Developer",
-          "Software Engineer",
-        ],
-        typeSpeed: 50,
-        backSpeed: 50,
-        smartBackspace: true,
-        loop: true,
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    var serviceWorkerVersion = "3774695061";
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
 </html>
