@@ -35303,7 +35303,7 @@ A.S9.prototype={
 $0(){return A.t0(A.kd("https://www.linkedin.com/in/yeapleezhi/",0,null))},
 $S:0}
 A.Sa.prototype={
-$0(){return A.t0(A.kd("assets/resume/Resume - YEAP LEE ZHI (2023).pdf",0,null))},
+$0(){return A.t0(A.kd("assets/resume/Resume.pdf",0,null))},
 $S:0}
 A.BZ.prototype={
 M(a){var s=null
