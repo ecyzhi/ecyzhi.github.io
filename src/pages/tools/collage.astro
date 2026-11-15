@@ -1,0 +1,195 @@
+---
+import Base from '../../layouts/Base.astro';
+import Collage from '../../tools/collage/Collage';
+
+const steps = [
+  { n: '01', title: 'Pick a layout', body: 'Start from a template, or choose Draw your own and drag lines across the canvas to split it into cells. Straight, slanted, as many as you like.' },
+  { n: '02', title: 'Add photos', body: 'Tap + in a cell, drop photos on it, or add several at once. Drag a photo to move it inside its cell, and pinch or scroll to zoom.' },
+  { n: '03', title: 'Download', body: 'Set spacing, corners and background, then save a JPG or PNG up to 3072 px, or share it straight to your photos.' },
+];
+const faqs = [
+  { q: 'Are my photos uploaded anywhere?', a: 'No. The collage is put together by your browser, on your device. Nothing is sent to a server, and closing the tab clears it.' },
+  { q: 'How do drawn lines work?', a: 'Each line you drag runs edge to edge through every cell it touches and splits them in two. Lines close to level or upright snap straight and line up with existing edges. Use undo to take one back, or Clear lines to start again from one cell.' },
+  { q: 'How do I swap two photos?', a: 'Tap a photo to select it, press Swap, then tap the cell you want to swap with.' },
+  { q: 'JPG or PNG?', a: 'JPG files are much smaller and fine for sharing. Pick PNG if you want a transparent background or the very sharpest result.' },
+  { q: 'It won\'t open my photo.', a: 'Your browser has to be able to read the format. JPG, PNG, WebP and GIF work everywhere; HEIC photos open in Safari, or export them as JPG first.' },
+];
+---
+<Base
+  title="Collage maker"
+  description="Make a photo collage from a template or draw your own layout with lines. Free, works on phone and desktop, and your photos never leave your device."
+>
+  <div class="wrap page">
+    <nav aria-label="Breadcrumb" class="crumbs mono"><a href="/tools/">tools</a> / <span aria-current="page">collage</span></nav>
+    <div class="head">
+      <div>
+        <h1>Collage maker</h1>
+        <p class="lede">Arrange photos in a template, or draw lines to make your own layout, then save it as one image.</p>
+      </div>
+      <div class="privacy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Runs on your device. Nothing is uploaded.
+      </div>
+    </div>
+
+    <Collage client:only="react">
+      <div slot="fallback" class="loading card">
+        <noscript>This tool needs JavaScript turned on.</noscript>
+        <span class="mono">loading editor…</span>
+      </div>
+    </Collage>
+
+    <section class="how" aria-labelledby="how">
+      <h2 id="how">How it works</h2>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li class="step">
+            <div class="n mono">{s.n}</div>
+            <div class="t">{s.title}</div>
+            <div class="b">{s.body}</div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="faq" aria-labelledby="faq">
+      <h2 id="faq">Questions</h2>
+      {faqs.map((f) => (
+        <details>
+          <summary>{f.q}</summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    max-width: 1200px;
+    padding-top: 32px;
+    padding-bottom: 88px;
+  }
+  .crumbs {
+    font-size: 13px;
+    color: var(--faint);
+    margin-bottom: 16px;
+  }
+  .crumbs a {
+    color: var(--faint);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    color: var(--text);
+  }
+  .crumbs span {
+    color: var(--text);
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    margin-bottom: 8px;
+  }
+  .head .lede {
+    max-width: 560px;
+  }
+  .privacy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .loading {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-size: 13px;
+    gap: 12px;
+  }
+  .how,
+  .faq {
+    margin-top: 56px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .step {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .n {
+    color: var(--accent);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .t {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .b {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .faq details {
+    border-top: 1px solid var(--line);
+    padding: 4px 0;
+  }
+  .faq details:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-weight: 500;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+  .faq details[open] summary::after {
+    content: '−';
+  }
+  .faq p {
+    color: var(--muted);
+    padding: 0 0 16px;
+    max-width: 720px;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .steps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
