@@ -1,0 +1,81 @@
+---
+import type { Tool } from '../data/tools';
+import ToolIcon from './ToolIcon.astro';
+interface Props {
+  tool: Tool;
+}
+const { tool } = Astro.props;
+---
+{tool.live ? (
+  <a class="tool live" href={`/tools/${tool.slug}/`}>
+    <div class="top"><ToolIcon icon={tool.icon} active /><span class="badge">LIVE</span></div>
+    <div class="name">{tool.name}</div>
+    <div class="blurb">{tool.blurb}</div>
+  </a>
+) : (
+  <div class="tool soon">
+    <div class="top"><ToolIcon icon={tool.icon} /><span class="soon-label">soon</span></div>
+    <div class="name">{tool.name}</div>
+    <div class="blurb">{tool.blurb}</div>
+  </div>
+)}
+<style>
+  .tool {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    min-height: 150px;
+    text-decoration: none;
+  }
+  .live {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .live:hover {
+    color: var(--text);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .soon {
+    background: var(--surface-dim);
+    border: 1px solid #22252c;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--on-accent);
+    background: var(--accent);
+    padding: 3px 8px;
+    border-radius: 99px;
+  }
+  .soon-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--faint);
+  }
+  .name {
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .soon .name {
+    color: var(--text-2);
+  }
+  .blurb {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .soon .blurb {
+    color: var(--faint);
+  }
+</style>

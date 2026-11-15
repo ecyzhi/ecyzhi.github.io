@@ -1,0 +1,153 @@
+---
+import Logo from './Logo.astro';
+import { site } from '../data/site';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const links = [
+  { href: '/about/', label: 'about', match: '/about' },
+  { href: '/#experience', label: 'experience', match: '' },
+  { href: '/tools/', label: 'tools', match: '/tools' },
+];
+const isCurrent = (match: string) => match !== '' && (path === match || path.startsWith(match + '/'));
+---
+<header class="site-header">
+  <div class="wrap bar">
+    <a href="/" class="home" aria-label={`${site.name}, home`}><Logo /></a>
+    <nav class="links mono" aria-label="Main">
+      {links.map((l) => (
+        <a href={l.href} aria-current={isCurrent(l.match) ? 'page' : undefined}>{l.label}</a>
+      ))}
+      <a href="/resume/" class="cta" aria-current={isCurrent('/resume') ? 'page' : undefined}>resume.pdf</a>
+    </nav>
+    <details class="menu">
+      <summary aria-label="Menu">
+        <svg class="open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+        <svg class="close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </summary>
+      <nav class="sheet mono" aria-label="Main">
+        {links.map((l) => (
+          <a href={l.href} aria-current={isCurrent(l.match) ? 'page' : undefined}>{l.label}</a>
+        ))}
+        <a href="/resume/" class="cta">resume.pdf</a>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<script>
+  // Close the mobile menu after following an in-page link.
+  document.querySelectorAll<HTMLAnchorElement>('.site-header .sheet a').forEach((a) =>
+    a.addEventListener('click', () => a.closest('details')?.removeAttribute('open'))
+  );
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(13, 14, 17, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .home {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .links {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .links a,
+  .sheet a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .links a:hover,
+  .links a[aria-current='page'],
+  .sheet a[aria-current='page'] {
+    color: var(--text);
+  }
+  .links .cta,
+  .sheet .cta {
+    color: var(--on-accent);
+    background: var(--accent);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+  .links .cta:hover {
+    background: var(--accent-hover);
+    color: var(--on-accent);
+  }
+  .menu {
+    display: none;
+    position: relative;
+  }
+  .menu summary {
+    list-style: none;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .menu .close,
+  .menu[open] .open {
+    display: none;
+  }
+  .menu[open] .close {
+    display: block;
+  }
+  .sheet {
+    position: absolute;
+    right: 0;
+    top: 54px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    font-size: 15px;
+  }
+  .sheet a {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  .sheet a:not(.cta):hover {
+    background: var(--surface-2);
+  }
+  .sheet .cta {
+    margin-top: 4px;
+    text-align: center;
+  }
+  @media (max-width: 640px) {
+    .links {
+      display: none;
+    }
+    .menu {
+      display: block;
+    }
+  }
+</style>

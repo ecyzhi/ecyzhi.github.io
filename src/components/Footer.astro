@@ -1,0 +1,39 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="wrap row mono">
+    <span>© {year} ecyzhi.com</span>
+    <span class="links">
+      <a href={site.links.github} rel="me">github</a>
+      <a href={site.links.linkedin} rel="me">linkedin</a>
+    </span>
+  </div>
+</footer>
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line-soft);
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 24px;
+    padding-bottom: 32px;
+    font-size: 13px;
+    color: var(--faint);
+  }
+  .links {
+    display: flex;
+    gap: 20px;
+  }
+  .links a {
+    color: var(--faint);
+    text-decoration: none;
+  }
+  .links a:hover {
+    color: var(--text);
+  }
+</style>

@@ -1,0 +1,59 @@
+---
+import { experience } from '../data/experience';
+---
+<ol class="roles">
+  {experience.map((r) => (
+    <li class="role">
+      <div class="period mono">{r.period}</div>
+      <div>
+        <h3>{r.title}</h3>
+        <div class="company">{r.company}</div>
+        <ul>
+          {r.points.map((p) => <li>{p}</li>)}
+        </ul>
+      </div>
+    </li>
+  ))}
+</ol>
+<style>
+  .roles {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .role {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 24px;
+    padding: 28px 0;
+    border-top: 1px solid var(--line);
+  }
+  .period {
+    font-size: 13px;
+    color: var(--faint);
+    padding-top: 3px;
+  }
+  h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .company {
+    color: var(--accent);
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  @media (max-width: 640px) {
+    .role {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+  }
+</style>

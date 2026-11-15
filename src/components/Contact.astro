@@ -1,0 +1,40 @@
+---
+import { site } from '../data/site';
+interface Props {
+  eyebrow?: string;
+}
+const { eyebrow } = Astro.props;
+---
+<div class="contact card">
+  <div class="text">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h2 class="section-title">Let's build something</h2>
+    <p class="lede">Open to freelance and full-time opportunities. The quickest way to reach me is LinkedIn.</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-primary" href={site.links.linkedin} rel="me">LinkedIn</a>
+    <a class="btn btn-ghost" href={site.links.github} rel="me">GitHub</a>
+  </div>
+</div>
+<style>
+  .contact {
+    border-radius: 18px;
+    padding: clamp(28px, 5vw, 56px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .text {
+    max-width: 560px;
+  }
+  .text h2 {
+    margin-bottom: 8px;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>

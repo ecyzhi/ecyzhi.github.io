@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import { tools } from '../../data/tools';
+
+const categories = ['Media', 'Developer'] as const;
+---
+<Base title="Tools" description="Free image and developer tools that run entirely in your browser. Your files never leave your device.">
+  <section class="wrap page-top">
+    <p class="eyebrow">tools</p>
+    <h1>Free tools, done in your browser</h1>
+    <p class="lede intro">
+      Small utilities that run on your device, on phone or desktop. Nothing is uploaded, there's no sign-up, and new tools
+      ship one at a time.
+    </p>
+    <div class="privacy mono">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+      your files never leave your device
+    </div>
+  </section>
+  {categories.map((cat, i) => (
+    <section class="wrap section cat" aria-labelledby={`cat-${cat}`}>
+      <p class="eyebrow">{String(i + 1).padStart(2, '0')} / {cat.toLowerCase()}</p>
+      <h2 id={`cat-${cat}`} class="section-title cat-title">{cat === 'Media' ? 'Image tools' : 'Developer utilities'}</h2>
+      <div class="tool-grid">
+        {tools.filter((t) => t.category === cat).map((tool) => <ToolCard tool={tool} />)}
+      </div>
+    </section>
+  ))}
+</Base>
+<style>
+  .page-top {
+    padding-top: clamp(40px, 7vw, 72px);
+    padding-bottom: 24px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    letter-spacing: -0.03em;
+  }
+  .intro {
+    margin-top: 12px;
+    max-width: 620px;
+    font-size: 17px;
+  }
+  .privacy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .cat {
+    padding-bottom: 32px;
+  }
+  .cat:last-of-type {
+    padding-bottom: 88px;
+  }
+  .cat-title {
+    margin-bottom: 20px;
+  }
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+</style>

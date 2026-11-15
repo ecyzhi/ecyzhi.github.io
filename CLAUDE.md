@@ -4,29 +4,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-The GitHub Pages deployment for the personal site at `ecyzhi.com` (see `CNAME`). There is no build system, package manager, linter, or test suite at the repo root — everything here is served as static files straight from `master`.
+Source for the personal site at `ecyzhi.com`: an [Astro](https://astro.build) static site with React islands for the in-browser tools. GitHub Actions builds it and deploys `dist/` to GitHub Pages (`.github/workflows/deploy.yml`, on push to `master`). The custom domain comes from `public/CNAME`.
 
-The root of the site is **compiled Flutter web output**, not source. The Flutter source project (`ecyzhi_flutter`, per `version.json`) lives elsewhere and is not in this repo.
+Design style is "Midnight Workshop": dark `#0D0E11` ground, logo yellow `#FFE14D` as the only accent, Inter for text and JetBrains Mono for labels (self-hosted via `@fontsource-variable`). Tokens live in `src/styles/global.css`; reuse them rather than hard-coding colours.
+
+## Commands
+
+```bash
+npm install
+npm run dev      # local dev server at http://localhost:4321
+npm run check    # astro check (TypeScript + .astro diagnostics)
+npm run build    # static output in dist/
+npm run preview  # serve dist/
+```
+
+There is no test suite. `npm run check && npm run build` is what CI runs on pull requests.
 
 ## Layout
 
-- **Root (`/`) — Flutter web build artifacts.** `index.html`, `main.dart.js`, `flutter.js`, `flutter_service_worker.js`, `canvaskit/`, `assets/` (incl. `AssetManifest.*`, `FontManifest.json`, `NOTICES`), `manifest.json`, `icons/`, `.last_build_id`, `version.json`. These are produced by `flutter build web` in the separate source repo and copied over wholesale. Do not hand-edit `main.dart.js`, `flutter_service_worker.js` (its resource hashes must match the files), or the asset manifests; content changes to the portfolio belong in the Flutter source, followed by a rebuild and copy.
-  - Flutter asset paths are doubled: a source asset `assets/images/x.svg` is served at `assets/assets/images/x.svg`. Files directly under `assets/` (e.g. `assets/logo/`, `assets/resume/Resume.pdf`) are hand-placed and referenced by absolute URL from the non-Flutter pages (e.g. `v1/` uses `/assets/logo/logo.svg`).
-  - Renaming an asset (like the resume) requires updating it in the Flutter source and redeploying the build, since the asset manifest and service worker hashes reference it.
-- **`v1/`** — the previous, deprecated hand-written portfolio (plain HTML/CSS/JS; uses typed.js, feather-icons, animate.css from CDNs).
-- **`blogs/`** — standalone hand-written HTML blog posts sharing `blog_style.css`. Posts link back to the Flutter app via `../#blogs`; the Flutter app links out to them.
-- **`ai_tee/`** — a standalone Bootstrap 5 landing page for the AI-Tee project. `scss/custom.scss` imports `_variables.scss`, a vendored copy of Bootstrap's SCSS in `ai_tee/bootstrap-scss/`, and a Bootswatch theme; the compiled `scss/custom.css` (+ `.map`) is committed and is what `index.html` loads. After editing the SCSS, recompile with any Sass compiler, e.g.:
-  ```bash
-  npx sass ai_tee/scss/custom.scss ai_tee/scss/custom.css
-  ```
-  Treat `ai_tee/bootstrap-scss/` as vendored third-party code.
+- `src/pages/` — routes. `index.astro` (home: hero, tools, about, experience, contact), `about.astro`, `resume.astro`, `tools/index.astro` (hub), `tools/<slug>.astro` (one page per tool), `404.astro`.
+- `src/data/` — content. `site.ts` (name, links, resume path), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon").
+- `src/components/` — Astro components shared by pages (header, footer, tool card, experience list, contact block).
+- `src/tools/<slug>/` — each tool's React editor, mounted with `client:only="react"` so no JS loads on non-tool pages. `src/tools/shared/` holds code meant for reuse by later media tools (file drop zone, image loading, PNG export and download).
+- `public/` — copied as is: `CNAME`, favicon and icons, `assets/resume/Resume.pdf`, `assets/logo/`, and `flutter_service_worker.js`.
 
-## Serving / previewing
+## Adding a tool
 
-Any static file server from the repo root works; the Flutter app expects to be served at `/` (`<base href="/">` in `index.html`), so open it at the server root, not via `file://`.
+1. Build the editor in `src/tools/<slug>/` as a React component. Everything must run in the browser; files never leave the device.
+2. Add `src/pages/tools/<slug>.astro` using `Base` layout and mount the editor with `client:only="react"`.
+3. Set `live: true` for it in `src/data/tools.ts`.
+4. It must work with touch and mouse on phone and desktop widths.
 
-```bash
-npx serve .
-```
+## Things to keep
 
-`.htaccess` contains Apache rewrite rules for extensionless `.html` URLs; GitHub Pages ignores it, so don't rely on it.
+- `public/flutter_service_worker.js` is a self-unregistering kill switch for the old Flutter site's service worker. Keep it at that path so returning visitors' browsers drop the cached old site. `Base.astro` also unregisters any leftover worker.
+- The resume stays at `/assets/resume/Resume.pdf` (old links point there).
+- No mention of AI-Tee, and no Projects or Blog pages for now.
