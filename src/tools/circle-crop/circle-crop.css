@@ -36,11 +36,15 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .cc-stage:active {
   cursor: grabbing;
 }
 .cc-stage canvas {
+  touch-action: none;
+  pointer-events: none;
   position: absolute;
   inset: 0;
   width: 100%;

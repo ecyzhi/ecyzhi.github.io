@@ -26,7 +26,7 @@ There is no test suite. `npm run check && npm run build` is what CI runs on pull
 - `src/data/` — content. `site.ts` (name, links, resume path), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon").
 - `src/components/` — Astro components shared by pages (header, footer, tool card, experience list, contact block).
 - `src/tools/<slug>/` — each tool's React editor, mounted with `client:only="react"` so no JS loads on non-tool pages. `src/tools/shared/` holds code meant for reuse by later media tools (file drop zone, image loading, PNG export and download).
-- `public/` — copied as is: `CNAME`, favicon and icons, `assets/resume/Resume.pdf`, `assets/logo/`, and `flutter_service_worker.js`.
+- `public/` — copied as is: `CNAME`, favicon and icons, `assets/resume/Resume.pdf`, and `flutter_service_worker.js`.
 
 ## Adding a tool
 
