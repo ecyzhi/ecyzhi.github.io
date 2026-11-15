@@ -1,0 +1,103 @@
+---
+import Base from '../layouts/Base.astro';
+import Contact from '../components/Contact.astro';
+import { skills, experience } from '../data/experience';
+import { site } from '../data/site';
+
+const groups = [
+  { label: 'frameworks', items: skills.frameworks, soft: false },
+  { label: 'languages', items: skills.languages, soft: false },
+  { label: 'tools', items: skills.tools, soft: true },
+];
+const latest = experience[0];
+---
+<Base title="About" description="About Yeap Lee Zhi, a software engineer in Malaysia working with Flutter, the web and .NET.">
+  <section class="wrap page-top">
+    <p class="eyebrow">about</p>
+    <h1>About me</h1>
+    <div class="grid">
+      <div class="body">
+        <p class="lede">
+          Located in {site.location}. I have built several frontend and backend applications throughout my career, from
+          .NET APIs behind client dashboards to Flutter apps on phones and the web.
+        </p>
+        <p class="lede">
+          I'm passionate about beautiful interfaces and creating intuitive user experiences. Currently, I'm focused on
+          building mobile and web applications.
+        </p>
+        <p class="lede">
+          Most recently I was {latest.title} at {latest.company}. The full history
+          is on the <a href="/#experience">home page</a> and in my <a href="/resume/">resume</a>.
+        </p>
+        <p class="lede">
+          This site is also where I keep small <a href="/tools/">browser tools</a> I find useful. They run entirely on your
+          device, so nothing you drop into them is uploaded anywhere.
+        </p>
+      </div>
+      <aside class="skills card">
+        {groups.map((g) => (
+          <div class="group">
+            <div class="label mono">{g.label}</div>
+            <div class="tags">
+              {g.items.map((s) => <span class:list={['tag', { 'tag-soft': g.soft }]}>{s}</span>)}
+            </div>
+          </div>
+        ))}
+      </aside>
+    </div>
+  </section>
+  <section class="wrap section">
+    <Contact />
+  </section>
+</Base>
+<style>
+  .page-top {
+    padding-top: clamp(40px, 7vw, 72px);
+    padding-bottom: 40px;
+  }
+  h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .body .lede {
+    line-height: 1.7;
+  }
+  .skills {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .label {
+    font-size: 13px;
+    color: var(--faint);
+    margin-bottom: 10px;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .skills .tag-soft {
+    background: var(--surface-2);
+  }
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

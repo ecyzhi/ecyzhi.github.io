@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Not found">
+  <section class="wrap box">
+    <p class="eyebrow">404</p>
+    <h1>This page doesn't exist.</h1>
+    <p class="lede">It may have moved when the site was rebuilt.</p>
+    <div class="row">
+      <a class="btn btn-primary" href="/">Go home</a>
+      <a class="btn btn-ghost" href="/tools/">Browse tools</a>
+    </div>
+  </section>
+</Base>
+<style>
+  .box {
+    padding-top: 96px;
+    padding-bottom: 120px;
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 48px);
+    margin-bottom: 12px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+</style>
