@@ -1,0 +1,195 @@
+---
+import Base from '../../layouts/Base.astro';
+import ImageToSvg from '../../tools/image-to-svg/ImageToSvg';
+
+const steps = [
+  { n: '01', title: 'Add an image', body: 'Choose a file, drop it on the page, or paste it. Logos, drawings, screenshots and photos all work.' },
+  { n: '02', title: 'Pick a style', body: 'Flat colour shapes, black and white, or line art traced along colour changes. Set the background to white, black or none.' },
+  { n: '03', title: 'Download', body: 'Get an SVG that scales to any size without going blurry, ready for print, cutting machines, icons and slides.' },
+];
+const faqs = [
+  { q: 'Is my image uploaded anywhere?', a: 'No. Tracing runs in your browser, on your device. Nothing is sent to a server, and closing the tab clears it.' },
+  { q: 'Which style should I use?', a: 'Colour suits logos, illustrations and photos you want to look like a poster. B & W is best for signatures, stamps, scans and one-colour logos. Line art draws outlines where colours change, like a colouring page.' },
+  { q: 'My SVG file is very large.', a: 'Use fewer colours, raise "remove specks" and "simplify paths" under fine-tune, or lower the detail level. Photos produce many small shapes, so they make bigger files than logos.' },
+  { q: 'The edges look rough or blobby.', a: 'Raise the detail level for finer edges, lower "smooth corners" to keep sharp corners, or turn "blur first" off for crisp pixel art and logos.' },
+  { q: 'It won\'t open my photo.', a: 'Your browser has to be able to read the format. JPG, PNG, WebP and GIF work everywhere; HEIC photos open in Safari, or export them as JPG first.' },
+];
+---
+<Base
+  title="Image to SVG"
+  description="Convert a JPG or PNG into a vector SVG in colour, black and white, or line art. Free, works on phone and desktop, and your image never leaves your device."
+>
+  <div class="wrap page">
+    <nav aria-label="Breadcrumb" class="crumbs mono"><a href="/tools/">tools</a> / <span aria-current="page">image-to-svg</span></nav>
+    <div class="head">
+      <div>
+        <h1>Image to SVG</h1>
+        <p class="lede">Trace a photo, logo or drawing into a clean vector SVG, in colour, black and white, or line art.</p>
+      </div>
+      <div class="privacy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Runs on your device. Nothing is uploaded.
+      </div>
+    </div>
+
+    <ImageToSvg client:only="react">
+      <div slot="fallback" class="loading card">
+        <noscript>This tool needs JavaScript turned on.</noscript>
+        <span class="mono">loading editor…</span>
+      </div>
+    </ImageToSvg>
+
+    <section class="how" aria-labelledby="how">
+      <h2 id="how">How it works</h2>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li class="step">
+            <div class="n mono">{s.n}</div>
+            <div class="t">{s.title}</div>
+            <div class="b">{s.body}</div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="faq" aria-labelledby="faq">
+      <h2 id="faq">Questions</h2>
+      {faqs.map((f) => (
+        <details>
+          <summary>{f.q}</summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    max-width: 1200px;
+    padding-top: 32px;
+    padding-bottom: 88px;
+  }
+  .crumbs {
+    font-size: 13px;
+    color: var(--faint);
+    margin-bottom: 16px;
+  }
+  .crumbs a {
+    color: var(--faint);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    color: var(--text);
+  }
+  .crumbs span {
+    color: var(--text);
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    margin-bottom: 8px;
+  }
+  .head .lede {
+    max-width: 560px;
+  }
+  .privacy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .loading {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-size: 13px;
+    gap: 12px;
+  }
+  .how,
+  .faq {
+    margin-top: 56px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .step {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .n {
+    color: var(--accent);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .t {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .b {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .faq details {
+    border-top: 1px solid var(--line);
+    padding: 4px 0;
+  }
+  .faq details:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-weight: 500;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+  .faq details[open] summary::after {
+    content: '−';
+  }
+  .faq p {
+    color: var(--muted);
+    padding: 0 0 16px;
+    max-width: 720px;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .steps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
