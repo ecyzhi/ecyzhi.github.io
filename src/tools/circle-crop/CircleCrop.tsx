@@ -8,6 +8,7 @@ import {
   loadImageFile,
   type LoadedImage,
 } from '../shared/image';
+import '../shared/tool.css';
 import './circle-crop.css';
 
 type Shape = 'circle' | 'oval';
