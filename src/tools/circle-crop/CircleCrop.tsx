@@ -234,7 +234,11 @@ export default function CircleCrop() {
     return { x: e.clientX - r.left - r.width / 2, y: e.clientY - r.top - r.height / 2 };
   };
 
+  // Mouse and pen use pointer events; touch is handled by the native touch
+  // listeners below, because iOS Safari doesn't reliably honour
+  // `touch-action: none` and cancels the pointers to scroll or zoom the page.
   const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -269,6 +273,63 @@ export default function CircleCrop() {
   const onPointerUp = (e: React.PointerEvent) => {
     pointers.current.delete(e.pointerId);
   };
+
+  // Touch: one finger pans, two fingers pinch-zoom and pan. The listeners are
+  // non-passive so preventDefault stops Safari from scrolling or zooming the page.
+  const gesture = useRef({ panBy, zoomAt });
+  gesture.current = { panBy, zoomAt };
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    let last: { x: number; y: number }[] = [];
+    const points = (e: TouchEvent) => {
+      const r = el.getBoundingClientRect();
+      return Array.from(e.touches)
+        .slice(0, 2)
+        .map((t) => ({ x: t.clientX - r.left - r.width / 2, y: t.clientY - r.top - r.height / 2 }));
+    };
+    const onStart = (e: TouchEvent) => {
+      e.preventDefault();
+      el.focus({ preventScroll: true });
+      last = points(e);
+    };
+    const onMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const cur = points(e);
+      const { panBy: pan, zoomAt: zoom } = gesture.current;
+      if (cur.length === 1 && last.length === 1) {
+        pan(cur[0].x - last[0].x, cur[0].y - last[0].y);
+      } else if (cur.length === 2 && last.length === 2) {
+        const midPrev = { x: (last[0].x + last[1].x) / 2, y: (last[0].y + last[1].y) / 2 };
+        const midCur = { x: (cur[0].x + cur[1].x) / 2, y: (cur[0].y + cur[1].y) / 2 };
+        const dPrev = Math.hypot(last[0].x - last[1].x, last[0].y - last[1].y);
+        const dCur = Math.hypot(cur[0].x - cur[1].x, cur[0].y - cur[1].y);
+        if (dPrev > 0) zoom(midCur.x, midCur.y, dCur / dPrev);
+        pan(midCur.x - midPrev.x, midCur.y - midPrev.y);
+      }
+      last = cur;
+    };
+    const onEnd = (e: TouchEvent) => {
+      last = points(e);
+    };
+    // Safari's own pinch gesture events would otherwise zoom the whole page.
+    const blockGesture = (e: Event) => e.preventDefault();
+    const opts = { passive: false } as const;
+    el.addEventListener('touchstart', onStart, opts);
+    el.addEventListener('touchmove', onMove, opts);
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    el.addEventListener('gesturestart', blockGesture, opts);
+    el.addEventListener('gesturechange', blockGesture, opts);
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+      el.removeEventListener('touchcancel', onEnd);
+      el.removeEventListener('gesturestart', blockGesture);
+      el.removeEventListener('gesturechange', blockGesture);
+    };
+  }, [img]);
 
   // Wheel zoom needs a non-passive listener so the page doesn't scroll.
   useEffect(() => {

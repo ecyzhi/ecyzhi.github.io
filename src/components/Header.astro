@@ -1,5 +1,4 @@
 ---
-import Logo from './Logo.astro';
 import { site } from '../data/site';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -12,7 +11,7 @@ const isCurrent = (match: string) => match !== '' && (path === match || path.sta
 ---
 <header class="site-header">
   <div class="wrap bar">
-    <a href="/" class="home" aria-label={`${site.name}, home`}><Logo /></a>
+    <a href="/" class="home mono" aria-label={`${site.name}, home`}>ecyzhi<span class="dot">.</span></a>
     <nav class="links mono" aria-label="Main">
       {links.map((l) => (
         <a href={l.href} aria-current={isCurrent(l.match) ? 'page' : undefined}>{l.label}</a>
@@ -61,6 +60,17 @@ const isCurrent = (match: string) => match !== '' && (path === match || path.sta
     display: flex;
     align-items: center;
     padding: 6px 0;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .home:hover {
+    color: var(--text);
+  }
+  .home .dot {
+    color: var(--accent);
   }
   .links {
     display: flex;
