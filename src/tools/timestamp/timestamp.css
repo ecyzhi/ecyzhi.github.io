@@ -1,0 +1,277 @@
+.ts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ts-clock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+}
+.ts-clock-text {
+  min-width: 0;
+}
+.ts-clock-num {
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.ts-clock-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.ts-clock-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ts-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.ts-panel {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 16px;
+}
+.ts-results {
+  flex: 999 1 460px;
+  gap: 20px;
+}
+
+.ts-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ts-label {
+  display: block;
+  font-size: 12px;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+
+.ts-input {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 0 12px;
+  /* 16px keeps iOS Safari from zooming in on focus */
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ts-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+select.ts-input {
+  padding-right: 36px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 21px, calc(100% - 13px) 21px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+input[type='date'].ts-input,
+input[type='time'].ts-input {
+  display: flex;
+  align-items: center;
+}
+.ts-input::-webkit-date-and-time-value {
+  text-align: left;
+}
+.ts-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+.ts-pick {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.ts-seg {
+  display: grid;
+  gap: 4px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: var(--radius);
+}
+.ts-seg-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ts-seg-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.ts-seg button {
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.ts-seg button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.ts-quick {
+  display: flex;
+  gap: 8px;
+}
+
+.ts-copy {
+  flex: none;
+  min-width: 64px;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ts-copy:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.ts-copy:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ts-copy-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.ts-copy-accent:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.ts-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.ts-error {
+  color: #ffb4a8;
+}
+
+.ts-empty {
+  color: var(--faint);
+  font-size: 14px;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.ts-rows {
+  display: flex;
+  flex-direction: column;
+}
+.ts-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.ts-rows .ts-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.ts-row-text {
+  flex: 1;
+  min-width: 0;
+}
+.ts-row-label {
+  font-size: 12px;
+  color: var(--faint);
+  margin-bottom: 2px;
+}
+.ts-row-value {
+  font-size: 15px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.ts-row-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ts-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.ts-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.ts-facts div {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.ts-facts dt {
+  font-size: 11px;
+  color: var(--faint);
+}
+.ts-facts dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .ts-clock,
+  .ts-panel {
+    padding: 16px;
+  }
+  .ts-clock-actions {
+    width: 100%;
+  }
+  .ts-clock-actions .ts-copy {
+    flex: 1;
+  }
+  .ts-pick {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
