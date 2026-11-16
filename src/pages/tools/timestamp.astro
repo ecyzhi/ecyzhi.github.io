@@ -1,0 +1,194 @@
+---
+import Base from '../../layouts/Base.astro';
+import Timestamp from '../../tools/timestamp/Timestamp';
+
+const steps = [
+  { n: '01', title: 'Paste or pick', body: 'Paste a Unix timestamp in seconds, milliseconds, microseconds or nanoseconds, or a date like 2026-11-16T10:07:41Z. Or pick a date and time in any zone.' },
+  { n: '02', title: 'Read it every way', body: 'See it as Unix seconds and milliseconds, ISO 8601, UTC, your local time, another time zone, and how long ago it was.' },
+  { n: '03', title: 'Copy', body: 'Tap Copy next to any line. The live clock up top gives you the current Unix time in one tap.' },
+];
+const faqs = [
+  { q: 'How does it know seconds from milliseconds?', a: 'By the number of digits. Up to 11 digits is read as seconds, 12 to 14 as milliseconds, 15 to 17 as microseconds, and 18 or more as nanoseconds. Pick a unit to override the guess.' },
+  { q: 'What happens to a date with no time zone?', a: 'A date and time without a zone, like 2026-11-16 10:00, is read as your local time. A bare date is read as local midnight. Add Z or an offset such as +08:00 to be exact.' },
+  { q: 'Does it handle daylight saving?', a: 'Yes. Offsets come from your browser\'s time zone database, so each zone shows the offset in force on that date, not today\'s.' },
+  { q: 'Is anything sent to a server?', a: 'No. Everything is worked out in your browser, and the page keeps working offline after your first visit.' },
+];
+---
+<Base
+  title="Timestamp converter"
+  description="Convert Unix timestamps to dates in UTC, your local time or any time zone, and dates back to Unix time. Free, works on phone and desktop, all in your browser."
+>
+  <div class="wrap page">
+    <nav aria-label="Breadcrumb" class="crumbs mono"><a href="/tools/">tools</a> / <span aria-current="page">timestamp</span></nav>
+    <div class="head">
+      <div>
+        <h1>Timestamp converter</h1>
+        <p class="lede">Turn Unix time into readable dates in any time zone, and dates back into Unix time.</p>
+      </div>
+      <div class="privacy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+        Runs on your device. Nothing is sent anywhere.
+      </div>
+    </div>
+
+    <Timestamp client:only="react">
+      <div slot="fallback" class="loading card">
+        <noscript>This tool needs JavaScript turned on.</noscript>
+        <span class="mono">loading converter…</span>
+      </div>
+    </Timestamp>
+
+    <section class="how" aria-labelledby="how">
+      <h2 id="how">How it works</h2>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li class="step">
+            <div class="n mono">{s.n}</div>
+            <div class="t">{s.title}</div>
+            <div class="b">{s.body}</div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="faq" aria-labelledby="faq">
+      <h2 id="faq">Questions</h2>
+      {faqs.map((f) => (
+        <details>
+          <summary>{f.q}</summary>
+          <p>{f.a}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+</Base>
+
+<style>
+  .page {
+    max-width: 1200px;
+    padding-top: 32px;
+    padding-bottom: 88px;
+  }
+  .crumbs {
+    font-size: 13px;
+    color: var(--faint);
+    margin-bottom: 16px;
+  }
+  .crumbs a {
+    color: var(--faint);
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    color: var(--text);
+  }
+  .crumbs span {
+    color: var(--text);
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: clamp(28px, 4vw, 40px);
+    margin-bottom: 8px;
+  }
+  .head .lede {
+    max-width: 560px;
+  }
+  .privacy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .loading {
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint);
+    font-size: 13px;
+    gap: 12px;
+  }
+  .how,
+  .faq {
+    margin-top: 56px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .step {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .n {
+    color: var(--accent);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .t {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .b {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .faq details {
+    border-top: 1px solid var(--line);
+    padding: 4px 0;
+  }
+  .faq details:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+  .faq summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-weight: 500;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary::after {
+    content: '+';
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+  .faq details[open] summary::after {
+    content: '−';
+  }
+  .faq p {
+    color: var(--muted);
+    padding: 0 0 16px;
+    max-width: 720px;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .steps {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
