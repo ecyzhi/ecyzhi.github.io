@@ -1,0 +1,455 @@
+.jt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.jt-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  height: min(72vh, 680px);
+  min-height: 460px;
+  transition: border-color 0.15s;
+}
+.jt-in.is-over {
+  border-color: var(--accent);
+}
+
+.jt-bar,
+.jt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.jt-foot {
+  border-bottom: 0;
+  border-top: 1px solid var(--line);
+}
+.jt-title {
+  font-size: 13px;
+  color: var(--faint);
+  padding-left: 4px;
+}
+.jt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.jt-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+.jt-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--text);
+}
+.jt-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 225, 77, 0.08);
+}
+.jt-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.jt-copy {
+  min-height: 36px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+.jt-seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  background: var(--bg);
+  padding: 3px;
+  border-radius: 9px;
+}
+.jt-seg button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.jt-seg button[aria-pressed='true'] {
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.jt-select select {
+  min-height: 36px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a0a6b0' stroke-width='1.5'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  color: var(--text-2);
+  font-size: 13px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+/* Input */
+.jt-text {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  resize: none;
+  background: var(--surface-dim);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  outline: none;
+}
+.jt-text::placeholder {
+  color: var(--faint);
+}
+.jt-text:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(255, 225, 77, 0.35);
+}
+
+.jt-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 10px 16px;
+  min-height: 52px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.jt-status.is-error {
+  background: rgba(255, 120, 100, 0.06);
+}
+.jt-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-weight: 500;
+}
+.jt-ok svg {
+  color: var(--accent);
+}
+.jt-dim {
+  color: var(--faint);
+  font-size: 12px;
+}
+.jt-err {
+  width: 100%;
+  min-width: 0;
+  color: #ffc2b8;
+}
+.jt-err-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.jt-err strong {
+  color: #ffb4a8;
+  font-weight: 600;
+  font-size: 12px;
+  margin-right: 4px;
+}
+.jt-err-line {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Output */
+.jt-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-dim);
+}
+.jt-code {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+  color: var(--text-2);
+  outline: none;
+}
+.jt-code.is-wrap {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.jt-code:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(255, 225, 77, 0.35);
+}
+
+.jt-k {
+  color: var(--text);
+}
+.jt-s {
+  color: var(--accent);
+}
+.jt-n,
+.jt-b {
+  color: #b9c3d3;
+}
+.jt-z {
+  color: var(--faint);
+  font-style: italic;
+}
+.jt-p {
+  color: var(--faint);
+}
+
+.jt-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.jt-empty-title {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 16px;
+}
+.jt-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Tree */
+.jt-tree-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.jt-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 6px 0;
+}
+.jt-tree,
+.jt-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.jt-tree {
+  font-size: 13px;
+  line-height: 1.5;
+  min-width: max-content;
+}
+.jt-tree-row {
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+}
+.jt-tree-row.is-selected {
+  background: rgba(255, 225, 77, 0.08);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.jt-tree-toggle {
+  flex: none;
+  width: 28px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+}
+.jt-tree-toggle svg {
+  transition: transform 0.12s;
+}
+.jt-tree-toggle.is-open svg {
+  transform: rotate(90deg);
+}
+.jt-tree-toggle:hover {
+  color: var(--text);
+}
+.jt-tree-label {
+  display: inline-flex;
+  align-items: baseline;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+}
+.jt-tree-label:hover {
+  background: var(--surface-2);
+}
+.jt-tree-root {
+  color: var(--accent);
+}
+.jt-tree-idx {
+  color: var(--faint);
+}
+.jt-tree-sum {
+  color: var(--faint);
+}
+.jt-tree-more {
+  margin: 4px 0;
+  padding: 4px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.jt-tree-more:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.jt-path {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line-soft);
+  min-height: 52px;
+}
+.jt-path-text {
+  order: -1;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.jt-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  padding: 10px 16px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 20;
+}
+.jt-toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 860px) {
+  .jt {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .jt-in {
+    height: auto;
+    min-height: 0;
+  }
+  .jt-in .jt-text {
+    flex: none;
+    height: 260px;
+  }
+  .jt-out {
+    height: 78vh;
+    height: 78svh;
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 16px stops iOS Safari zooming in when the box is focused. */
+  .jt-text {
+    font-size: 16px;
+  }
+  .jt-bar,
+  .jt-foot {
+    padding: 8px 10px;
+  }
+  .jt-actions {
+    margin-left: 0;
+  }
+  .jt-foot .jt-actions {
+    width: 100%;
+  }
+  .jt-foot .jt-actions > * {
+    flex: 1 1 auto;
+  }
+  .jt-btn,
+  .jt-copy,
+  .jt-select select {
+    min-height: 40px;
+  }
+}
