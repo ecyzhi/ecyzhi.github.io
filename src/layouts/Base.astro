@@ -24,8 +24,12 @@ const canonical = new URL(Astro.url.pathname, site.url).href;
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content="#0D0E11" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content={site.handle} />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
@@ -42,10 +46,16 @@ const canonical = new URL(Astro.url.pathname, site.url).href;
     </main>
     <Footer />
     <script>
-      // Returning visitors may still run the old Flutter site's service worker.
-      // Unregister it so they always get this site fresh from the network.
+      // In production, register the service worker so the site installs as an
+      // app and works offline. It takes over the old Flutter site's worker
+      // (same scope) and clears its caches. In dev, remove any worker so local
+      // changes always show.
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+        if (import.meta.env.PROD) {
+          window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        } else {
+          navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+        }
       }
     </script>
   </body>
