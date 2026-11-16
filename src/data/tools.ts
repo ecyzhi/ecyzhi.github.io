@@ -18,5 +18,5 @@ export const tools: Tool[] = [
   { slug: 'jwt', name: 'JWT decoder', blurb: 'See a token’s header, payload and expiry.', category: 'Developer', icon: 'jwt', live: true },
   { slug: 'encode', name: 'Encode & decode', blurb: 'Base64, URL and HTML entities, both ways.', category: 'Developer', icon: 'encode', live: true },
   { slug: 'timestamp', name: 'Timestamp converter', blurb: 'Unix time to local and UTC, and back.', category: 'Developer', icon: 'clock', live: true },
-  { slug: 'loan', name: 'Loan calculator', blurb: 'Monthly payments and an amortisation table.', category: 'Developer', icon: 'loan', live: false },
+  { slug: 'loan', name: 'Loan calculator', blurb: 'Monthly payments and an amortisation table.', category: 'Developer', icon: 'loan', live: true },
 ];
