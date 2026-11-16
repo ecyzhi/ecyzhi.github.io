@@ -88,34 +88,64 @@ export function strokeMask(shapes: Shape[], w: number, h: number, strokePx: numb
   return grey;
 }
 
+const INF = 1e20;
+
 /**
- * Two-pass chamfer distance (orthogonal 10, diagonal 14). Zero pixels are
- * sources; `outside` is the distance given to pixels beyond the raster edge.
+ * Exact squared Euclidean distance along one row or column (Felzenszwalb and
+ * Huttenlocher). With `edge`, the cells just beyond both ends count as sources.
  */
-function chamfer(d: Uint16Array, w: number, h: number, outside: number) {
-  const M = 65535;
-  const o1 = Math.min(M, outside + 10);
-  const o2 = Math.min(M, outside + 14);
+function edt1d(f: Float64Array, len: number, edge: boolean, d: Float64Array, v: Int32Array, z: Float64Array) {
+  const g = (q: number) => (q < 0 || q >= len ? 0 : f[q]);
+  const lo = edge ? -1 : 0;
+  const hi = edge ? len : len - 1;
+  let k = -1;
+  for (let q = lo; q <= hi; q++) {
+    const gq = g(q);
+    if (gq >= INF) continue;
+    let s = -INF;
+    while (k >= 0) {
+      const p = v[k];
+      s = (gq + q * q - (g(p) + p * p)) / (2 * (q - p));
+      if (s > z[k]) break;
+      k--;
+    }
+    k++;
+    v[k] = q;
+    z[k] = k === 0 ? -INF : s;
+    z[k + 1] = INF;
+  }
+  if (k < 0) {
+    d.fill(INF, 0, len);
+    return;
+  }
+  k = 0;
+  for (let q = 0; q < len; q++) {
+    while (z[k + 1] < q) k++;
+    const p = v[k];
+    d[q] = (q - p) * (q - p) + g(p);
+  }
+}
+
+/** Squared distance from every pixel to the nearest pixel where `src` is set. */
+function distanceField(src: Uint8Array, w: number, h: number, edge: boolean): Float32Array {
+  const out = new Float32Array(w * h);
+  const m = Math.max(w, h);
+  const f = new Float64Array(m);
+  const d = new Float64Array(m);
+  const v = new Int32Array(m + 3);
+  const z = new Float64Array(m + 4);
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) f[y] = src[y * w + x] ? 0 : INF;
+    edt1d(f, h, edge, d, v, z);
+    for (let y = 0; y < h; y++) out[y * w + x] = d[y];
+  }
   for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      let v = d[i];
-      if (!v) continue;
-      v = Math.min(v, x > 0 ? d[i - 1] + 10 : o1, y > 0 ? d[i - w] + 10 : o1);
-      v = Math.min(v, x > 0 && y > 0 ? d[i - w - 1] + 14 : o2, x < w - 1 && y > 0 ? d[i - w + 1] + 14 : o2);
-      d[i] = Math.min(M, v);
-    }
+    const row = y * w;
+    for (let x = 0; x < w; x++) f[x] = out[row + x];
+    edt1d(f, w, edge, d, v, z);
+    for (let x = 0; x < w; x++) out[row + x] = d[x];
   }
-  for (let y = h - 1; y >= 0; y--) {
-    for (let x = w - 1; x >= 0; x--) {
-      const i = y * w + x;
-      let v = d[i];
-      if (!v) continue;
-      v = Math.min(v, x < w - 1 ? d[i + 1] + 10 : o1, y < h - 1 ? d[i + w] + 10 : o1);
-      v = Math.min(v, x < w - 1 && y < h - 1 ? d[i + w + 1] + 14 : o2, x > 0 && y < h - 1 ? d[i + w - 1] + 14 : o2);
-      d[i] = Math.min(M, v);
-    }
-  }
+  return out;
 }
 
 /**
@@ -203,15 +233,17 @@ export function computeLayout(shapes: Shape[], w: number, h: number, gap: number
   // Rounded corners: shrink every cell by r, then grow it back (an opening).
   const r = radius * short;
   if (r >= 0.75) {
-    const d = new Uint16Array(n);
-    for (let i = 0; i < n; i++) d[i] = alpha[i] >= 128 ? 65535 : 0;
-    chamfer(d, w, h, 0);
-    const r10 = r * 10;
-    for (let i = 0; i < n; i++) d[i] = d[i] >= r10 ? 0 : 65535;
-    chamfer(d, w, h, 65535);
+    // Exact distances keep the corner arcs round (a chamfer approximation
+    // turns them into short straight facets).
+    const src = new Uint8Array(n);
+    for (let i = 0; i < n; i++) src[i] = alpha[i] >= 128 ? 0 : 1;
+    const inside = distanceField(src, w, h, true);
+    const r2 = r * r;
+    for (let i = 0; i < n; i++) src[i] = inside[i] >= r2 ? 1 : 0;
+    const grow = distanceField(src, w, h, false);
     for (let i = 0; i < n; i++) {
       if (!lab[i]) continue;
-      const a = Math.min(alpha[i], Math.round(clamp(r + 1 - d[i] / 10, 0, 1) * 255));
+      const a = Math.min(alpha[i], Math.round(clamp(r + 0.5 - Math.sqrt(grow[i]), 0, 1) * 255));
       alpha[i] = a;
       if (!a) lab[i] = 0;
     }
