@@ -387,8 +387,17 @@ export default function Collage() {
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
   const addFiles = useCallback(async (files: File[], target: number | null) => {
-    const list = files.filter((f) => !f.type || f.type.startsWith('image/'));
-    if (!list.length) return;
+    const picked = files.filter((f) => !f.type || f.type.startsWith('image/'));
+    if (!picked.length) return;
+    // Take only as many photos as there are cells to put them in.
+    const cur = slotsRef.current;
+    const room = cur.filter((s, i) => !s.img && i !== target).length + (target !== null && cur[target] ? 1 : 0);
+    if (!room) {
+      setNote('Every cell already has a photo. Remove one, or pick a layout with more cells.');
+      return;
+    }
+    const list = picked.slice(0, room);
+    const skipped = picked.length - list.length;
     setNote(null);
     const loaded: LoadedImage[] = [];
     let failed = 0;
@@ -417,7 +426,10 @@ export default function Collage() {
     const left = queue.length;
     setSlots(out);
     const msgs: string[] = [];
-    if (left) msgs.push(`${left} photo${left > 1 ? 's' : ''} didn't fit. Pick a template with more cells, or draw more lines.`);
+    if (skipped || left) {
+      const n = skipped + left;
+      msgs.push(`Only ${room} cell${room > 1 ? 's were' : ' was'} free, so ${n} photo${n > 1 ? 's were' : ' was'} left out. Pick a layout with more cells to add more.`);
+    }
     if (failed) msgs.push(`${failed} file${failed > 1 ? 's' : ''} couldn't be opened.`);
     if (msgs.length) setNote(msgs.join(' '));
   }, []);
@@ -1298,9 +1310,9 @@ export default function Collage() {
           </button>
         </div>
 
-        <button type="button" className="btn btn-primary" onClick={() => pickFor(null)}>
+        <button type="button" className="btn btn-primary" onClick={() => pickFor(null)} disabled={filled >= cellCount && cellCount > 0} title={filled >= cellCount ? 'Every cell has a photo' : undefined}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-          Add photos
+          {filled >= cellCount && cellCount > 0 ? 'Every cell has a photo' : `Add photos (${cellCount - filled} free)`}
         </button>
 
         <div className="cm-field">
