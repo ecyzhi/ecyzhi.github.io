@@ -3,13 +3,14 @@ import Base from '../../layouts/Base.astro';
 import Collage from '../../tools/collage/Collage';
 
 const steps = [
-  { n: '01', title: 'Pick a layout', body: 'Start from a template, or choose Draw your own and drag lines across the canvas to split it into cells. Straight, slanted, as many as you like.' },
+  { n: '01', title: 'Pick a layout', body: 'Start from a template grouped by photo count, or choose Draw your own and draw lines, curves, ovals, circles or boxes to split the canvas into cells.' },
   { n: '02', title: 'Add photos', body: 'Tap + in a cell, drop photos on it, or add several at once. Drag a photo to move it inside its cell, and pinch or scroll to zoom.' },
   { n: '03', title: 'Download', body: 'Set spacing, corners and background, then save a JPG or PNG up to 3072 px, or share it straight to your photos.' },
 ];
 const faqs = [
   { q: 'Are my photos uploaded anywhere?', a: 'No. The collage is put together by your browser, on your device. Nothing is sent to a server, and closing the tab clears it.' },
-  { q: 'How do drawn lines work?', a: 'Each line you drag runs edge to edge through every cell it touches and splits them in two. Lines close to level or upright snap straight and line up with existing edges. Use undo to take one back, or Clear lines to start again from one cell.' },
+  { q: 'How does drawing work?', a: 'Pick a shape and drag on the canvas. The shape keeps its handles so you can adjust it, and nothing changes until you press Confirm. Every area the shapes enclose becomes a cell. A line end left floating stretches to the nearest line or edge when you confirm. Tap a confirmed line later to edit it again.' },
+  { q: 'What do Ruler and Snap do?', a: 'Ruler shows rulers along the canvas and a light guide grid, with the position of whatever you are dragging. Snap adds points along the canvas edges at halves, quarters or eighths, and line ends jump to them, to other line ends and to the centre.' },
   { q: 'How do I swap two photos?', a: 'Tap a photo to select it, press Swap, then tap the cell you want to swap with.' },
   { q: 'JPG or PNG?', a: 'JPG files are much smaller and fine for sharing. Pick PNG if you want a transparent background or the very sharpest result.' },
   { q: 'It won\'t open my photo.', a: 'Your browser has to be able to read the format. JPG, PNG, WebP and GIF work everywhere; HEIC photos open in Safari, or export them as JPG first.' },
@@ -17,14 +18,14 @@ const faqs = [
 ---
 <Base
   title="Collage maker"
-  description="Make a photo collage from a template or draw your own layout with lines. Free, works on phone and desktop, and your photos never leave your device."
+  description="Make a photo collage from a template or draw your own layout with lines, curves and shapes. Free, works on phone and desktop, and your photos never leave your device."
 >
   <div class="wrap page">
     <nav aria-label="Breadcrumb" class="crumbs mono"><a href="/tools/">tools</a> / <span aria-current="page">collage</span></nav>
     <div class="head">
       <div>
         <h1>Collage maker</h1>
-        <p class="lede">Arrange photos in a template, or draw lines to make your own layout, then save it as one image.</p>
+        <p class="lede">Arrange photos in a template, or draw lines and shapes to make your own layout, then save it as one image.</p>
       </div>
       <div class="privacy">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
