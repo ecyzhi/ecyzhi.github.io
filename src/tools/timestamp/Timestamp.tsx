@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  abbr,
   allZones,
   calendarInfo,
+  cityOf,
+  formatOffset,
   humanIn,
   isoIn,
   localZone,
+  offsetMinutes,
   parseInput,
   relative,
+  searchZones,
   wallIn,
   wallToMs,
   zoneLabel,
@@ -22,7 +27,7 @@ const UNITS: { id: Unit; label: string }[] = [
   { id: 'ns', label: 'ns' },
 ];
 
-const ZONE_KEY = 'ts-out-zone';
+const BOARD_KEY = 'ts-board-zones';
 const pad = (n: number, w = 2) => String(n).padStart(w, '0');
 
 function readStored(key: string) {
@@ -64,21 +69,26 @@ async function copyText(text: string) {
   }
 }
 
-function useNow() {
+/** The current time, refreshed on every animation frame (about 30 times a second) so milliseconds run live. */
+function useLiveNow() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    let timer: number;
-    const tick = () => {
-      setNow(Date.now());
-      timer = window.setTimeout(tick, 1000 - (Date.now() % 1000) + 5);
+    let raf = 0;
+    let last = 0;
+    const loop = (t: number) => {
+      if (t - last >= 33) {
+        last = t;
+        setNow(Date.now());
+      }
+      raf = requestAnimationFrame(loop);
     };
-    timer = window.setTimeout(tick, 1000 - (Date.now() % 1000) + 5);
-    return () => window.clearTimeout(timer);
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
   }, []);
   return now;
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+function CopyButton({ value, label, text = 'Copy' }: { value: string; label: string; text?: string }) {
   const [state, setState] = useState<'idle' | 'ok' | 'fail'>('idle');
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -90,23 +100,45 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   };
   return (
     <button type="button" className="ts-copy" onClick={onClick} aria-label={`Copy ${label}`} disabled={!value}>
-      {state === 'ok' ? 'Copied' : state === 'fail' ? 'Failed' : 'Copy'}
+      {state === 'ok' ? 'Copied' : state === 'fail' ? 'Failed' : text}
     </button>
   );
 }
 
-function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="ts-row">
       <div className="ts-row-text">
         <div className="ts-row-label mono">{label}</div>
         <div className="ts-row-value mono">{value}</div>
-        {hint && <div className="ts-row-hint">{hint}</div>}
       </div>
       <CopyButton value={value} label={label} />
     </div>
   );
 }
+
+type ZoneOption = { id: string; label: string };
+
+// Memoised so the 400-odd options don't re-render on every clock tick.
+const ZoneSelect = memo(function ZoneSelect({
+  value,
+  zones,
+  onChange,
+}: {
+  value: string;
+  zones: ZoneOption[];
+  onChange: (z: string) => void;
+}) {
+  return (
+    <select className="ts-input" value={value} onChange={(e) => onChange(e.target.value)}>
+      {zones.map((z) => (
+        <option key={z.id} value={z.id}>
+          {z.label}
+        </option>
+      ))}
+    </select>
+  );
+});
 
 function toPickFields(ms: number, tz: string) {
   const w = wallIn(ms, tz);
@@ -114,75 +146,331 @@ function toPickFields(ms: number, tz: string) {
   return { date: `${y}-${pad(w.mo)}-${pad(w.d)}`, time: `${pad(w.h)}:${pad(w.mi)}:${pad(w.s)}` };
 }
 
+const dayFmtCache = new Map<string, Intl.DateTimeFormat>();
+function dayLabel(ms: number, tz: string) {
+  let f = dayFmtCache.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat(undefined, { timeZone: tz, weekday: 'long' });
+    dayFmtCache.set(tz, f);
+  }
+  return f.format(new Date(ms));
+}
+
+function diffLabel(min: number) {
+  if (min === 0) return 'same as you';
+  const a = Math.abs(min);
+  const h = Math.floor(a / 60);
+  const m = a % 60;
+  return `${h ? `${h}h` : ''}${m ? `${h ? ' ' : ''}${m}m` : ''} ${min > 0 ? 'ahead' : 'behind'}`;
+}
+
+function defaultBoard(local: string) {
+  const picks = [local, 'UTC', 'America/Los_Angeles', 'America/New_York', 'Europe/London', 'Asia/Tokyo'];
+  return Array.from(new Set(picks));
+}
+
+function ZoneBoard({
+  ms,
+  local,
+  zoneIds,
+  zones,
+  isLive,
+  onSetMs,
+  onFreeze,
+  onGoLive,
+}: {
+  ms: number;
+  local: string;
+  zoneIds: string[];
+  zones: ZoneOption[];
+  isLive: boolean;
+  onSetMs: (ms: number) => void;
+  onFreeze: () => void;
+  onGoLive: () => void;
+}) {
+  const [fromZone, setFromZone] = useState(local);
+  const [board, setBoard] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(readStored(BOARD_KEY) || 'null');
+      if (Array.isArray(stored) && stored.length) {
+        const valid = stored.filter((z): z is string => typeof z === 'string' && zoneIds.includes(z));
+        if (valid.length) return valid;
+      }
+    } catch {
+      /* ignore */
+    }
+    return defaultBoard(local);
+  });
+  const [query, setQuery] = useState('');
+  useEffect(() => writeStored(BOARD_KEY, JSON.stringify(board)), [board]);
+
+  const results = useMemo(
+    () => searchZones(query, zoneIds, Date.now()).filter((z) => !board.includes(z)),
+    // `ms` is left out on purpose: results only need to change as the query does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [query, zoneIds, board],
+  );
+
+  const add = (z: string) => {
+    setBoard((b) => (b.includes(z) ? b : [...b, z]));
+    setQuery('');
+  };
+  const remove = (z: string) => setBoard((b) => (b.length > 1 ? b.filter((x) => x !== z) : b));
+  const move = (z: string, dir: -1 | 1) =>
+    setBoard((b) => {
+      const i = b.indexOf(z);
+      const j = i + dir;
+      if (j < 0 || j >= b.length) return b;
+      const next = b.slice();
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
+  // Set the date and/or the time as read in zone z; the other part keeps its current value there.
+  const setWall = (z: string, part: { date?: string; time?: string }) => {
+    const w = { ...wallIn(ms, z) };
+    if (part.date !== undefined) {
+      const dm = /^(-?\d{1,6})-(\d{2})-(\d{2})$/.exec(part.date);
+      if (!dm) return;
+      Object.assign(w, { y: +dm[1], mo: +dm[2], d: +dm[3] });
+    }
+    if (part.time !== undefined) {
+      const tm = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(part.time);
+      if (!tm) return;
+      Object.assign(w, { h: +tm[1], mi: +tm[2], s: tm[3] ? +tm[3] : 0 });
+    }
+    onSetMs(wallToMs(w, z));
+  };
+  const onFromZone = useCallback((z: string) => setFromZone(z), []);
+  const from = toPickFields(ms, fromZone);
+
+  const localOff = offsetMinutes(ms, local);
+
+  return (
+    <section className="ts-panel card ts-board" aria-labelledby="ts-board-title">
+      <div className="ts-board-head">
+        <div>
+          <h2 id="ts-board-title" className="ts-h2">Time zone converter</h2>
+          <p className="ts-note">Set a date and time in one zone to see it everywhere, or follow the current time live.</p>
+        </div>
+      </div>
+
+      <div className="ts-from">
+        <label className="ts-field ts-from-zone">
+          <span className="ts-label">Convert from</span>
+          <ZoneSelect value={fromZone} zones={zones} onChange={onFromZone} />
+        </label>
+        <label className="ts-field">
+          <span className="ts-label">Date</span>
+          <input
+            className="ts-input mono"
+            type="date"
+            value={from.date}
+            onFocus={onFreeze}
+            onChange={(e) => setWall(fromZone, { date: e.target.value })}
+          />
+        </label>
+        <label className="ts-field">
+          <span className="ts-label">Time</span>
+          <input
+            className="ts-input mono"
+            type="time"
+            step={1}
+            value={from.time}
+            onFocus={onFreeze}
+            onChange={(e) => setWall(fromZone, { time: e.target.value })}
+          />
+        </label>
+        <div className="ts-from-actions">
+          <button
+            type="button"
+            className={isLive ? 'ts-copy ts-live is-on' : 'ts-copy ts-live'}
+            aria-pressed={isLive}
+            onClick={isLive ? onFreeze : onGoLive}
+          >
+            <span className="ts-dot" aria-hidden="true"></span>
+            {isLive ? 'Live' : 'Now'}
+          </button>
+        </div>
+      </div>
+
+      <div className="ts-search">
+        <label className="ts-field">
+          <span className="ts-label">Add a zone by city, abbreviation or offset</span>
+          <input
+            className="ts-input"
+            type="search"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            enterKeyHint="done"
+            placeholder="Tokyo, PST, CET, +5:30…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && results[0]) {
+                e.preventDefault();
+                add(results[0]);
+              }
+              if (e.key === 'Escape') setQuery('');
+            }}
+          />
+        </label>
+        {query.trim() && (
+          <ul className="ts-results-list" role="listbox" aria-label="Matching time zones">
+            {results.length ? (
+              results.map((z) => (
+                <li key={z}>
+                  <button type="button" className="ts-result" onClick={() => add(z)}>
+                    <span className="ts-abbr mono">{abbr(z, ms)}</span>
+                    <span className="ts-result-name">{cityOf(z)}</span>
+                    <span className="ts-result-meta mono">
+                      {z} · UTC{formatOffset(offsetMinutes(ms, z))}
+                    </span>
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="ts-result-none">No zone matches that.</li>
+            )}
+          </ul>
+        )}
+      </div>
+
+      <ul className="ts-zones">
+        {board.map((z, i) => {
+          const w = wallIn(ms, z);
+          const off = offsetMinutes(ms, z);
+          return (
+            <li key={z} className={z === local ? 'ts-zone-row is-local' : 'ts-zone-row'}>
+              <div className="ts-zone-info">
+                <div className="ts-zone-title">
+                  <span className="ts-abbr mono">{abbr(z, ms)}</span>
+                  <span className="ts-zone-city">{cityOf(z)}</span>
+                  {z === local && <span className="ts-you mono">you</span>}
+                </div>
+                <div className="ts-zone-meta mono">
+                  {dayLabel(ms, z)} · UTC{formatOffset(off)} · {z === local ? z : diffLabel(off - localOff)}
+                </div>
+              </div>
+              <div className="ts-zone-edit">
+                <input
+                  className="ts-zone-time mono"
+                  type="time"
+                  step={1}
+                  aria-label={`Time in ${cityOf(z)}`}
+                  value={`${pad(w.h)}:${pad(w.mi)}:${pad(w.s)}`}
+                  onFocus={onFreeze}
+                  onChange={(e) => setWall(z, { time: e.target.value })}
+                />
+                <input
+                  className="ts-zone-date mono"
+                  type="date"
+                  aria-label={`Date in ${cityOf(z)}`}
+                  value={toPickFields(ms, z).date}
+                  onFocus={onFreeze}
+                  onChange={(e) => setWall(z, { date: e.target.value })}
+                />
+              </div>
+              <div className="ts-zone-tools">
+                <button type="button" className="ts-mini" aria-label={`Move ${cityOf(z)} up`} disabled={i === 0} onClick={() => move(z, -1)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
+                </button>
+                <button type="button" className="ts-mini" aria-label={`Remove ${cityOf(z)}`} disabled={board.length < 2} onClick={() => remove(z)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export default function Timestamp() {
-  const now = useNow();
+  const now = useLiveNow();
   const local = useMemo(localZone, []);
+  const zoneIds = useMemo(allZones, []);
   const zones = useMemo(() => {
     const at = Date.now();
-    return allZones().map((z) => ({ id: z, label: z === local ? `${zoneLabel(z, at)} · yours` : zoneLabel(z, at) }));
-  }, [local]);
+    return zoneIds.map((z) => ({ id: z, label: z === local ? `${zoneLabel(z, at)} · yours` : zoneLabel(z, at) }));
+  }, [zoneIds, local]);
 
   const [mode, setMode] = useState<'text' | 'pick'>('text');
-  const [text, setText] = useState(() => String(Math.floor(Date.now() / 1000)));
+  // Live: the converter follows the current time until you type, pick or edit something.
+  const [live, setLive] = useState(true);
+  const [text, setText] = useState(() => String(Date.now()));
   const [unit, setUnit] = useState<Unit>('auto');
   const [pick, setPick] = useState(() => ({ ...toPickFields(Date.now(), localZone()), zone: localZone() }));
-  const [outZone, setOutZone] = useState(() => {
-    const stored = readStored(ZONE_KEY);
-    if (stored && allZones().includes(stored)) return stored;
-    // UTC and local already have their own rows, so start on a third zone.
-    return localZone() === 'America/New_York' ? 'Europe/London' : 'America/New_York';
-  });
   const [paused, setPaused] = useState<number | null>(null);
 
-  useEffect(() => writeStored(ZONE_KEY, outZone), [outZone]);
+  const isLive = live && mode === 'text';
 
   const parsed = useMemo(() => {
-    if (mode === 'text') return parseInput(text, unit);
+    if (mode === 'text') {
+      if (isLive) return { ok: true as const, ms: now, note: 'Live: following the current time. Type or paste to convert something else.' };
+      return parseInput(text, unit);
+    }
     const dm = /^(-?\d{1,6})-(\d{2})-(\d{2})$/.exec(pick.date);
     const tm = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(pick.time || '00:00');
     if (!dm || !tm) return { ok: false as const, error: 'Pick a date and a time.' };
-    const ms = wallToMs(
-      { y: +dm[1], mo: +dm[2], d: +dm[3], h: +tm[1], mi: +tm[2], s: tm[3] ? +tm[3] : 0 },
-      pick.zone,
-    );
-    return { ok: true as const, ms, note: `Wall time in ${pick.zone.replace(/_/g, ' ')}.` };
-  }, [mode, text, unit, pick]);
+    const ms = wallToMs({ y: +dm[1], mo: +dm[2], d: +dm[3], h: +tm[1], mi: +tm[2], s: tm[3] ? +tm[3] : 0 }, pick.zone);
+    return { ok: true as const, ms, note: `Wall time in ${pick.zone.replace(/_/g, ' ')} (${abbr(pick.zone, ms)}).` };
+  }, [mode, isLive, now, text, unit, pick]);
 
   const ms = parsed.ok ? parsed.ms : null;
 
+  const loadMs = useCallback((value: number) => {
+    const whole = Math.floor(value);
+    setText(String(whole));
+    setUnit('auto');
+    setLive(false);
+    setPick((p) => ({ ...p, ...toPickFields(whole, p.zone) }));
+  }, []);
+
+  const freeze = () => {
+    if (isLive) loadMs(now);
+  };
+
+  const goLive = () => {
+    setMode('text');
+    setUnit('auto');
+    setLive(true);
+  };
+
   const switchMode = (next: 'text' | 'pick') => {
     if (next === mode) return;
-    if (next === 'pick' && ms !== null) setPick((p) => ({ ...p, ...toPickFields(ms, p.zone) }));
+    if (next === 'pick' && ms !== null) {
+      setPick((p) => ({ ...p, ...toPickFields(ms, p.zone) }));
+      if (isLive) loadMs(ms);
+    }
     if (next === 'text' && ms !== null) {
-      setText(String(Math.floor(ms / 1000)));
+      setText(String(Math.floor(ms)));
       setUnit('auto');
     }
     setMode(next);
   };
 
-  const loadMs = (value: number) => {
-    setText(String(Math.floor(value / 1000)));
-    setUnit('auto');
-    setPick((p) => ({ ...p, ...toPickFields(value, p.zone) }));
-  };
+  const onPickZone = useCallback((z: string) => setPick((p) => ({ ...p, zone: z })), []);
 
   const clock = paused ?? now;
+  const clockMs = String(Math.floor(clock));
   const clockSec = String(Math.floor(clock / 1000));
 
-  let rows: { label: string; value: string; hint?: string }[] = [];
+  let rows: { label: string; value: string }[] = [];
   let info: ReturnType<typeof calendarInfo> | null = null;
   if (ms !== null) {
-    const secs = ms / 1000;
-    const wholeSecs = Math.floor(secs);
     info = calendarInfo(wallIn(ms, local));
     rows = [
-      { label: 'Unix seconds', value: String(wholeSecs) },
       { label: 'Unix milliseconds', value: String(Math.floor(ms)) },
+      { label: 'Unix seconds', value: String(Math.floor(ms / 1000)) },
       { label: 'ISO 8601 · UTC', value: isoIn(ms, 'UTC') },
-      { label: 'ISO 8601 · your offset', value: isoIn(ms, local) },
+      { label: `ISO 8601 · ${abbr(local, ms)}`, value: isoIn(ms, local) },
       { label: 'UTC', value: humanIn(ms, 'UTC') },
       { label: `Your time · ${local.replace(/_/g, ' ')}`, value: humanIn(ms, local) },
-      { label: 'Relative', value: relative(ms, now) },
+      { label: 'Relative', value: isLive ? 'now' : relative(ms, now) },
     ];
   }
 
@@ -190,23 +478,17 @@ export default function Timestamp() {
     <div className="ts">
       <section className="ts-clock card" aria-label="Current Unix time">
         <div className="ts-clock-text">
-          <div className="ts-row-label mono">{paused ? 'paused' : 'now'} · unix seconds</div>
-          <div className="ts-clock-num mono" aria-live="off">{clockSec}</div>
-          <div className="ts-clock-sub mono">{humanIn(clock, local)}</div>
+          <div className="ts-row-label mono">{paused ? 'paused' : 'now'} · unix milliseconds</div>
+          <div className="ts-clock-num mono" aria-live="off">{clockMs}</div>
+          <div className="ts-clock-sub mono">
+            {clockSec} s · {humanIn(clock, local)}
+          </div>
         </div>
         <div className="ts-clock-actions">
-          <CopyButton value={clockSec} label="current Unix time" />
+          <CopyButton value={clockMs} label="current Unix time in milliseconds" text="Copy ms" />
+          <CopyButton value={clockSec} label="current Unix time in seconds" text="Copy s" />
           <button type="button" className="ts-copy" onClick={() => setPaused(paused ? null : Date.now())}>
             {paused ? 'Resume' : 'Pause'}
-          </button>
-          <button
-            type="button"
-            className="ts-copy ts-copy-accent"
-            onClick={() => {
-              loadMs(clock);
-            }}
-          >
-            Convert
           </button>
         </div>
       </section>
@@ -234,24 +516,32 @@ export default function Timestamp() {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck={false}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="1794823661 or 2026-11-16T10:07:41Z"
+                  value={isLive ? String(Math.floor(now)) : text}
+                  onFocus={freeze}
+                  onChange={(e) => {
+                    setLive(false);
+                    setText(e.target.value);
+                  }}
+                  placeholder="1794823661000 or 2026-11-16 10:07 PST"
                 />
               </label>
               <div className="ts-field">
                 <span className="ts-label" id="ts-unit-label">Unit for numbers</span>
                 <div className="ts-seg ts-seg-5" role="group" aria-labelledby="ts-unit-label">
                   {UNITS.map((u) => (
-                    <button key={u.id} type="button" aria-pressed={unit === u.id} onClick={() => setUnit(u.id)}>
+                    <button
+                      key={u.id}
+                      type="button"
+                      aria-pressed={unit === u.id}
+                      onClick={() => {
+                        freeze();
+                        setUnit(u.id);
+                      }}
+                    >
                       {u.label}
                     </button>
                   ))}
                 </div>
-              </div>
-              <div className="ts-quick">
-                <button type="button" className="ts-copy" onClick={() => loadMs(Date.now())}>Now</button>
-                <button type="button" className="ts-copy" onClick={() => setText('')}>Clear</button>
               </div>
             </>
           ) : (
@@ -279,21 +569,29 @@ export default function Timestamp() {
               </div>
               <label className="ts-field">
                 <span className="ts-label">In time zone</span>
-                <select
-                  className="ts-input"
-                  value={pick.zone}
-                  onChange={(e) => setPick((p) => ({ ...p, zone: e.target.value }))}
-                >
-                  {zones.map((z) => (
-                    <option key={z.id} value={z.id}>{z.label}</option>
-                  ))}
-                </select>
+                <ZoneSelect value={pick.zone} zones={zones} onChange={onPickZone} />
               </label>
-              <div className="ts-quick">
-                <button type="button" className="ts-copy" onClick={() => loadMs(Date.now())}>Now</button>
-              </div>
             </>
           )}
+
+          <div className="ts-quick">
+            <button type="button" className={isLive ? 'ts-copy ts-live is-on' : 'ts-copy ts-live'} aria-pressed={isLive} onClick={isLive ? freeze : goLive}>
+              <span className="ts-dot" aria-hidden="true"></span>
+              {isLive ? 'Live' : 'Go live'}
+            </button>
+            {mode === 'text' && (
+              <button
+                type="button"
+                className="ts-copy"
+                onClick={() => {
+                  setLive(false);
+                  setText('');
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
           <p className={parsed.ok ? 'ts-note' : 'ts-note ts-error'} role="status">
             {parsed.ok ? parsed.note : 'error' in parsed ? parsed.error : 'Type or paste something to convert.'}
@@ -310,22 +608,6 @@ export default function Timestamp() {
                   <Row key={r.label} {...r} />
                 ))}
               </div>
-
-              <div className="ts-zone">
-                <label className="ts-field">
-                  <span className="ts-label">Also show in</span>
-                  <select className="ts-input" value={outZone} onChange={(e) => setOutZone(e.target.value)}>
-                    {zones.map((z) => (
-                      <option key={z.id} value={z.id}>{z.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <div className="ts-rows">
-                  <Row label={outZone.replace(/_/g, ' ')} value={humanIn(ms, outZone)} />
-                  <Row label="ISO 8601 · that offset" value={isoIn(ms, outZone)} />
-                </div>
-              </div>
-
               {info && (
                 <dl className="ts-facts">
                   <div>
@@ -348,6 +630,19 @@ export default function Timestamp() {
           )}
         </section>
       </div>
+
+      {ms !== null && (
+        <ZoneBoard
+          ms={ms}
+          local={local}
+          zoneIds={zoneIds}
+          zones={zones}
+          isLive={isLive}
+          onSetMs={loadMs}
+          onFreeze={freeze}
+          onGoLive={goLive}
+        />
+      )}
     </div>
   );
 }

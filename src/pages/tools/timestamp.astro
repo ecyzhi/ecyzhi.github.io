@@ -3,27 +3,28 @@ import Base from '../../layouts/Base.astro';
 import Timestamp from '../../tools/timestamp/Timestamp';
 
 const steps = [
-  { n: '01', title: 'Paste or pick', body: 'Paste a Unix timestamp in seconds, milliseconds, microseconds or nanoseconds, or a date like 2026-11-16T10:07:41Z. Or pick a date and time in any zone.' },
-  { n: '02', title: 'Read it every way', body: 'See it as Unix seconds and milliseconds, ISO 8601, UTC, your local time, another time zone, and how long ago it was.' },
-  { n: '03', title: 'Copy', body: 'Tap Copy next to any line. The live clock up top gives you the current Unix time in one tap.' },
+  { n: '01', title: 'Watch it live', body: 'The converter starts on the current time and keeps running, down to the millisecond. Copy the live value whenever you need it.' },
+  { n: '02', title: 'Paste or pick', body: 'Paste a Unix timestamp in milliseconds, seconds, microseconds or nanoseconds, or a date like 2026-11-16 10:07 PST. Or pick a date and time in any zone.' },
+  { n: '03', title: 'Compare zones', body: 'Add cities by name, abbreviation or offset. Change the time in any zone and every other zone follows.' },
 ];
 const faqs = [
-  { q: 'How does it know seconds from milliseconds?', a: 'By the number of digits. Up to 11 digits is read as seconds, 12 to 14 as milliseconds, 15 to 17 as microseconds, and 18 or more as nanoseconds. Pick a unit to override the guess.' },
-  { q: 'What happens to a date with no time zone?', a: 'A date and time without a zone, like 2026-11-16 10:00, is read as your local time. A bare date is read as local midnight. Add Z or an offset such as +08:00 to be exact.' },
-  { q: 'Does it handle daylight saving?', a: 'Yes. Offsets come from your browser\'s time zone database, so each zone shows the offset in force on that date, not today\'s.' },
-  { q: 'Is anything sent to a server?', a: 'No. Everything is worked out in your browser, and the page keeps working offline after your first visit.' },
+  { q: 'How does it know milliseconds from seconds?', a: 'By the number of digits. Up to 11 digits is read as seconds, 12 to 14 as milliseconds, 15 to 17 as microseconds, and 18 or more as nanoseconds. Pick a unit to override the guess.' },
+  { q: 'What happens to a date with no time zone?', a: 'A date and time without a zone, like 2026-11-16 10:00, is read as your local time. A bare date is read as local midnight. Add Z, an offset such as +08:00, or an abbreviation such as PST to be exact.' },
+  { q: 'Some abbreviations mean two things. Which one wins?', a: 'CST is read as US Central, IST as India, BST as British Summer Time and AST as Atlantic time. The note under the input says which reading it used. Use a numeric offset when in doubt.' },
+  { q: 'Does it handle daylight saving?', a: 'Yes. Offsets and abbreviations come from your browser\'s time zone database for that exact moment, so New York shows EST in winter and EDT in summer.' },
+  { q: 'Is anything sent to a server?', a: 'No. Everything is worked out in your browser, your zone list is saved on this device only, and the page keeps working offline after your first visit.' },
 ];
 ---
 <Base
   title="Timestamp converter"
-  description="Convert Unix timestamps to dates in UTC, your local time or any time zone, and dates back to Unix time. Free, works on phone and desktop, all in your browser."
+  description="Live Unix time in milliseconds, timestamp to date conversion, and a time zone converter with abbreviations like PST, CET and MYT. Free, works on phone and desktop, all in your browser."
 >
   <div class="wrap page">
     <nav aria-label="Breadcrumb" class="crumbs mono"><a href="/tools/">tools</a> / <span aria-current="page">timestamp</span></nav>
     <div class="head">
       <div>
         <h1>Timestamp converter</h1>
-        <p class="lede">Turn Unix time into readable dates in any time zone, and dates back into Unix time.</p>
+        <p class="lede">Live Unix time in milliseconds, readable dates in any zone, and a time zone converter with abbreviations.</p>
       </div>
       <div class="privacy">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
