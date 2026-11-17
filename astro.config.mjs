@@ -8,5 +8,7 @@ export default defineConfig({
   site: 'https://ecyzhi.com',
   output: 'static',
   trailingSlash: 'ignore',
+  // The tools hub is now the home page; keep old /tools/ links working.
+  redirects: { '/tools': '/#all' },
   integrations: [react(), sitemap(), serviceWorker()],
 });

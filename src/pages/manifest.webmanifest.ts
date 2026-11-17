@@ -23,7 +23,7 @@ export const GET: APIRoute = () => {
       { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     shortcuts: [
-      { name: 'All tools', url: '/tools/', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
+      { name: 'All tools', url: '/#all', icons: [{ src: '/icon-192.png', sizes: '192x192' }] },
       ...tools
         .filter((t) => t.live)
         .map((t) => ({ name: t.name, description: t.blurb, url: `/tools/${t.slug}/`, icons: [{ src: '/icon-192.png', sizes: '192x192' }] })),

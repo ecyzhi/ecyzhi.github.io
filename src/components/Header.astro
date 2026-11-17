@@ -3,11 +3,12 @@ import { site } from '../data/site';
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const links = [
+  { href: '/', label: 'tools', match: '/' },
   { href: '/about/', label: 'about', match: '/about' },
-  { href: '/#experience', label: 'experience', match: '' },
-  { href: '/tools/', label: 'tools', match: '/tools' },
 ];
-const isCurrent = (match: string) => match !== '' && (path === match || path.startsWith(match + '/'));
+// "tools" is current on the home page and on every tool page.
+const isCurrent = (match: string) =>
+  match === '/' ? path === '/' || path.startsWith('/tools/') : path === match || path.startsWith(match + '/');
 ---
 <header class="site-header">
   <div class="wrap bar">
