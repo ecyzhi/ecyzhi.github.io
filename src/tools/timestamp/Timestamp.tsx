@@ -150,7 +150,7 @@ const dayFmtCache = new Map<string, Intl.DateTimeFormat>();
 function dayLabel(ms: number, tz: string) {
   let f = dayFmtCache.get(tz);
   if (!f) {
-    f = new Intl.DateTimeFormat(undefined, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    f = new Intl.DateTimeFormat(undefined, { timeZone: tz, weekday: 'long' });
     dayFmtCache.set(tz, f);
   }
   return f.format(new Date(ms));
@@ -173,15 +173,22 @@ function ZoneBoard({
   ms,
   local,
   zoneIds,
+  zones,
+  isLive,
   onSetMs,
   onFreeze,
+  onGoLive,
 }: {
   ms: number;
   local: string;
   zoneIds: string[];
+  zones: ZoneOption[];
+  isLive: boolean;
   onSetMs: (ms: number) => void;
   onFreeze: () => void;
+  onGoLive: () => void;
 }) {
+  const [fromZone, setFromZone] = useState(local);
   const [board, setBoard] = useState<string[]>(() => {
     try {
       const stored = JSON.parse(readStored(BOARD_KEY) || 'null');
@@ -219,12 +226,23 @@ function ZoneBoard({
       return next;
     });
 
-  const setTime = (z: string, value: string) => {
-    const tm = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(value);
-    if (!tm) return;
-    const w = wallIn(ms, z);
-    onSetMs(wallToMs({ ...w, h: +tm[1], mi: +tm[2], s: tm[3] ? +tm[3] : 0 }, z));
+  // Set the date and/or the time as read in zone z; the other part keeps its current value there.
+  const setWall = (z: string, part: { date?: string; time?: string }) => {
+    const w = { ...wallIn(ms, z) };
+    if (part.date !== undefined) {
+      const dm = /^(-?\d{1,6})-(\d{2})-(\d{2})$/.exec(part.date);
+      if (!dm) return;
+      Object.assign(w, { y: +dm[1], mo: +dm[2], d: +dm[3] });
+    }
+    if (part.time !== undefined) {
+      const tm = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(part.time);
+      if (!tm) return;
+      Object.assign(w, { h: +tm[1], mi: +tm[2], s: tm[3] ? +tm[3] : 0 });
+    }
+    onSetMs(wallToMs(w, z));
   };
+  const onFromZone = useCallback((z: string) => setFromZone(z), []);
+  const from = toPickFields(ms, fromZone);
 
   const localOff = offsetMinutes(ms, local);
 
@@ -233,7 +251,46 @@ function ZoneBoard({
       <div className="ts-board-head">
         <div>
           <h2 id="ts-board-title" className="ts-h2">Time zone converter</h2>
-          <p className="ts-note">The same moment in every zone. Change a time to convert from that zone.</p>
+          <p className="ts-note">Set a date and time in one zone to see it everywhere, or follow the current time live.</p>
+        </div>
+      </div>
+
+      <div className="ts-from">
+        <label className="ts-field ts-from-zone">
+          <span className="ts-label">Convert from</span>
+          <ZoneSelect value={fromZone} zones={zones} onChange={onFromZone} />
+        </label>
+        <label className="ts-field">
+          <span className="ts-label">Date</span>
+          <input
+            className="ts-input mono"
+            type="date"
+            value={from.date}
+            onFocus={onFreeze}
+            onChange={(e) => setWall(fromZone, { date: e.target.value })}
+          />
+        </label>
+        <label className="ts-field">
+          <span className="ts-label">Time</span>
+          <input
+            className="ts-input mono"
+            type="time"
+            step={1}
+            value={from.time}
+            onFocus={onFreeze}
+            onChange={(e) => setWall(fromZone, { time: e.target.value })}
+          />
+        </label>
+        <div className="ts-from-actions">
+          <button
+            type="button"
+            className={isLive ? 'ts-copy ts-live is-on' : 'ts-copy ts-live'}
+            aria-pressed={isLive}
+            onClick={isLive ? onFreeze : onGoLive}
+          >
+            <span className="ts-dot" aria-hidden="true"></span>
+            {isLive ? 'Live' : 'Now'}
+          </button>
         </div>
       </div>
 
@@ -297,15 +354,25 @@ function ZoneBoard({
                   {dayLabel(ms, z)} · UTC{formatOffset(off)} · {z === local ? z : diffLabel(off - localOff)}
                 </div>
               </div>
-              <input
-                className="ts-zone-time mono"
-                type="time"
-                step={1}
-                aria-label={`Time in ${cityOf(z)}`}
-                value={`${pad(w.h)}:${pad(w.mi)}:${pad(w.s)}`}
-                onFocus={onFreeze}
-                onChange={(e) => setTime(z, e.target.value)}
-              />
+              <div className="ts-zone-edit">
+                <input
+                  className="ts-zone-time mono"
+                  type="time"
+                  step={1}
+                  aria-label={`Time in ${cityOf(z)}`}
+                  value={`${pad(w.h)}:${pad(w.mi)}:${pad(w.s)}`}
+                  onFocus={onFreeze}
+                  onChange={(e) => setWall(z, { time: e.target.value })}
+                />
+                <input
+                  className="ts-zone-date mono"
+                  type="date"
+                  aria-label={`Date in ${cityOf(z)}`}
+                  value={toPickFields(ms, z).date}
+                  onFocus={onFreeze}
+                  onChange={(e) => setWall(z, { date: e.target.value })}
+                />
+              </div>
               <div className="ts-zone-tools">
                 <button type="button" className="ts-mini" aria-label={`Move ${cityOf(z)} up`} disabled={i === 0} onClick={() => move(z, -1)}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
@@ -564,7 +631,18 @@ export default function Timestamp() {
         </section>
       </div>
 
-      {ms !== null && <ZoneBoard ms={ms} local={local} zoneIds={zoneIds} onSetMs={loadMs} onFreeze={freeze} />}
+      {ms !== null && (
+        <ZoneBoard
+          ms={ms}
+          local={local}
+          zoneIds={zoneIds}
+          zones={zones}
+          isLive={isLive}
+          onSetMs={loadMs}
+          onFreeze={freeze}
+          onGoLive={goLive}
+        />
+      )}
     </div>
   );
 }

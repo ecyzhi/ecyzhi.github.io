@@ -423,8 +423,38 @@ input[type='time'].ts-input {
   color: var(--faint);
   line-height: 1.5;
 }
-.ts-zone-time {
+.ts-zone-edit {
   grid-area: time;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.ts-zone-date {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 10px;
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-size: 16px;
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+}
+.ts-zone-date:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.ts-zone-date::-webkit-date-and-time-value {
+  text-align: left;
+}
+.ts-zone-date::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+.ts-zone-time {
   width: 100%;
   min-width: 0;
   height: 52px;
@@ -477,4 +507,37 @@ input[type='time'].ts-input {
 .ts-mini:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* "Convert from" row */
+.ts-from {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.ts-from .ts-input {
+  background-color: var(--surface);
+}
+.ts-from-actions .ts-copy {
+  height: 48px;
+}
+@media (max-width: 760px) {
+  .ts-from {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .ts-from-zone {
+    grid-column: 1 / -1;
+  }
+  .ts-from-actions {
+    grid-column: 1 / -1;
+  }
+  .ts-from-actions .ts-copy {
+    width: 100%;
+    justify-content: center;
+  }
 }
