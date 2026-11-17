@@ -5,7 +5,7 @@ interface Props {
   active?: boolean;
 }
 const { icon, active = false } = Astro.props;
-const color = active ? 'var(--accent)' : '#6B717C';
+const color = active ? 'var(--accent)' : 'var(--icon)';
 ---
 {icon === 'json' ? (
   <span class="glyph" style={`color:${color}`} aria-hidden="true">{'{ }'}</span>

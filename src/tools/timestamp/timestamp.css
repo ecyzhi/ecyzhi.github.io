@@ -137,7 +137,7 @@ input[type='time'].ts-input {
   -webkit-tap-highlight-color: transparent;
 }
 .ts-seg button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
@@ -169,14 +169,14 @@ input[type='time'].ts-input {
   cursor: not-allowed;
 }
 .ts-copy-accent {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
 .ts-copy-accent:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent-fill-hover);
+  border-color: var(--accent-fill-hover);
 }
 
 .ts-note {
@@ -185,7 +185,7 @@ input[type='time'].ts-input {
   line-height: 1.5;
 }
 .ts-error {
-  color: #ffb4a8;
+  color: var(--danger);
 }
 
 .ts-empty {
@@ -286,8 +286,8 @@ input[type='time'].ts-input {
   color: var(--accent);
 }
 .ts-live.is-on .ts-dot {
-  background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 225, 77, 0.18);
+  background: var(--accent-fill);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
   .ts-live.is-on .ts-dot {
@@ -296,7 +296,7 @@ input[type='time'].ts-input {
 }
 @keyframes ts-pulse {
   50% {
-    box-shadow: 0 0 0 6px rgba(255, 225, 77, 0);
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 
@@ -365,7 +365,7 @@ input[type='time'].ts-input {
   min-width: 52px;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(255, 225, 77, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
@@ -392,7 +392,7 @@ input[type='time'].ts-input {
   border-radius: 12px;
 }
 .ts-zone-row.is-local {
-  border-color: rgba(255, 225, 77, 0.45);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .ts-zone-info {
   grid-area: info;

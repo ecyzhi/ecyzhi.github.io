@@ -1,4 +1,12 @@
-/* Midnight Workshop: dark ground, logo yellow as the only accent. */
+/* Midnight Workshop: dark ground, logo yellow as the only accent.
+   The light theme keeps the same structure on a pale ground. The theme is set
+   by data-theme on <html> (an inline script in Base.astro picks the saved
+   choice or the system setting before first paint); without JS the
+   prefers-color-scheme block below applies.
+
+   Accent tokens: --accent is for text, strokes, borders and focus rings (it
+   turns dark amber in light mode so it stays readable); --accent-fill is the
+   logo yellow for filled surfaces such as buttons, always with --on-accent text. */
 :root {
   --bg: #0d0e11;
   --surface: #15171c;
@@ -7,19 +15,109 @@
   --line: #262a32;
   --line-soft: #1e2127;
   --line-strong: #333842;
+  --line-dim: #22252c;
   --text: #ecedef;
   --text-2: #c9cdd3;
   --muted: #a0a6b0;
   --faint: #8a909a;
+  --icon: #6b717c;
   --accent: #ffe14d;
   --accent-hover: #fff0a0;
+  --accent-fill: #ffe14d;
+  --accent-fill-hover: #fff0a0;
   --on-accent: #15130a;
+  --danger: #ffb4a8;
+  --danger-strong: #ff7864;
+  --warn: #f6c48a;
+  --warn-strong: #f0a050;
+  --code-key: #b9c3d3;
+  --header-bg: rgba(13, 14, 17, 0.88);
+  --overlay-bg: rgba(13, 14, 17, 0.86);
+  --shadow: rgba(0, 0, 0, 0.35);
+  --shadow-strong: rgba(0, 0, 0, 0.5);
+  --checker-a: #2a2e36;
+  --checker-b: #3a3f49;
+  --ruler: #4a505c;
+  --stage-empty: #262a32;
   --radius: 10px;
   --radius-lg: 14px;
   --font-sans: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --wrap: 1120px;
   color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --surface-dim: #f0f1f4;
+  --line: #e1e4e9;
+  --line-soft: #e8eaee;
+  --line-strong: #cdd2d9;
+  --line-dim: #e4e6ea;
+  --text: #14161a;
+  --text-2: #30353d;
+  --muted: #535a65;
+  --faint: #616873;
+  --icon: #8a909a;
+  --accent: #7d5c00;
+  --accent-hover: #5c4400;
+  --accent-fill: #ffe14d;
+  --accent-fill-hover: #ffd919;
+  --on-accent: #15130a;
+  --danger: #b42318;
+  --danger-strong: #b42318;
+  --warn: #8f5200;
+  --warn-strong: #a35d00;
+  --code-key: #3b4a63;
+  --header-bg: rgba(246, 247, 249, 0.88);
+  --overlay-bg: rgba(255, 255, 255, 0.92);
+  --shadow: rgba(20, 24, 33, 0.1);
+  --shadow-strong: rgba(20, 24, 33, 0.16);
+  --checker-a: #e9ebef;
+  --checker-b: #d7dbe1;
+  --ruler: #a3a9b2;
+  --stage-empty: #dfe2e7;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef0f3;
+    --surface-dim: #f0f1f4;
+    --line: #e1e4e9;
+    --line-soft: #e8eaee;
+    --line-strong: #cdd2d9;
+    --line-dim: #e4e6ea;
+    --text: #14161a;
+    --text-2: #30353d;
+    --muted: #535a65;
+    --faint: #616873;
+    --icon: #8a909a;
+    --accent: #7d5c00;
+    --accent-hover: #5c4400;
+    --accent-fill: #ffe14d;
+    --accent-fill-hover: #ffd919;
+    --danger: #b42318;
+    --danger-strong: #b42318;
+    --warn: #8f5200;
+    --warn-strong: #a35d00;
+    --code-key: #3b4a63;
+    --header-bg: rgba(246, 247, 249, 0.88);
+    --overlay-bg: rgba(255, 255, 255, 0.92);
+    --shadow: rgba(20, 24, 33, 0.1);
+    --shadow-strong: rgba(20, 24, 33, 0.16);
+    --checker-a: #e9ebef;
+    --checker-b: #d7dbe1;
+    --ruler: #a3a9b2;
+    --stage-empty: #dfe2e7;
+  --ruler: #a3a9b2;
+  --stage-empty: #dfe2e7;
+    color-scheme: light;
+  }
 }
 
 *,
@@ -145,11 +243,11 @@ select {
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
 }
 .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
   color: var(--on-accent);
 }
 .btn-ghost {
@@ -204,7 +302,7 @@ select {
   top: -60px;
   z-index: 10;
   padding: 10px 14px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-radius: 8px;
   font-weight: 600;

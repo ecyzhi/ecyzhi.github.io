@@ -1,8 +1,8 @@
 /* Shared look for the media tools: checkerboard for transparency, and the file drop zone. */
 
 .checker {
-  background-color: #2a2e36;
-  background-image: conic-gradient(#3a3f49 25%, transparent 0 50%, #3a3f49 0 75%, transparent 0);
+  background-color: var(--checker-a);
+  background-image: conic-gradient(var(--checker-b) 25%, transparent 0 50%, var(--checker-b) 0 75%, transparent 0);
   background-size: 16px 16px;
 }
 
@@ -24,7 +24,7 @@
 }
 .dropzone.is-over {
   border-color: var(--accent);
-  background: rgba(255, 225, 77, 0.06);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 .dropzone svg {
   color: var(--faint);
@@ -48,6 +48,6 @@
 
 .dz-error {
   margin: 0;
-  color: #ffb4a8;
+  color: var(--danger);
   font-size: 14px;
 }

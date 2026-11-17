@@ -67,7 +67,7 @@
 .jt-btn[aria-pressed='true'] {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(255, 225, 77, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 .jt-btn:disabled {
   opacity: 0.45;
@@ -141,7 +141,7 @@
   color: var(--faint);
 }
 .jt-text:focus-visible {
-  box-shadow: inset 0 0 0 2px rgba(255, 225, 77, 0.35);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .jt-status {
@@ -156,7 +156,7 @@
   font-size: 13px;
 }
 .jt-status.is-error {
-  background: rgba(255, 120, 100, 0.06);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
 }
 .jt-ok {
   display: inline-flex;
@@ -175,7 +175,7 @@
 .jt-err {
   width: 100%;
   min-width: 0;
-  color: #ffc2b8;
+  color: var(--danger);
 }
 .jt-err-head {
   display: flex;
@@ -184,7 +184,7 @@
   gap: 12px;
 }
 .jt-err strong {
-  color: #ffb4a8;
+  color: var(--danger);
   font-weight: 600;
   font-size: 12px;
   margin-right: 4px;
@@ -226,7 +226,7 @@
   word-break: break-all;
 }
 .jt-code:focus-visible {
-  box-shadow: inset 0 0 0 2px rgba(255, 225, 77, 0.35);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .jt-k {
@@ -237,7 +237,7 @@
 }
 .jt-n,
 .jt-b {
-  color: #b9c3d3;
+  color: var(--code-key);
 }
 .jt-z {
   color: var(--faint);
@@ -304,7 +304,7 @@
   padding-right: 12px;
 }
 .jt-tree-row.is-selected {
-  background: rgba(255, 225, 77, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   box-shadow: inset 2px 0 0 var(--accent);
 }
 .jt-tree-toggle {
@@ -396,7 +396,7 @@
   transform: translate(-50%, 12px);
   padding: 10px 16px;
   border-radius: 99px;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-size: 14px;
   font-weight: 600;

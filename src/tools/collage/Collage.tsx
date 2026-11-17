@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { canShareFiles, canvasToBlob, downloadBlob, loadImageFile, type LoadedImage } from '../shared/image';
+import { cssVar, useTheme } from '../shared/theme';
 import {
   DEFAULT_VIEW,
   MAX_ZOOM,
@@ -61,7 +62,6 @@ const BACKGROUNDS = [
   { value: 'transparent', label: 'Transparent' },
 ];
 const SIZES = [1080, 2048, 3072];
-const PLACEHOLDER = '#262a32';
 const ACCENT = '#FFE14D';
 const GROUPS = [2, 3, 4, 5, 6, 7] as const; // 7 means "7 or more"
 const RULER = 24; // px
@@ -802,6 +802,12 @@ export default function Collage() {
 
   const transparent = bg === 'transparent';
   const shown = live ?? base;
+  const theme = useTheme();
+  // Guide colour for lines, rulers and outlines drawn over the stage: logo
+  // yellow on the dark theme, the darker accent on the light one, where empty
+  // cells are pale. Handles keep the yellow fill with a dark edge in both.
+  const ink = theme === 'light' ? '125,92,0' : '255,225,77';
+  const INK = `rgb(${ink})`;
   const shownSlots = live && live !== base ? liveSlots : slots;
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -814,7 +820,7 @@ export default function Collage() {
       const ctx = canvas.getContext('2d')!;
       drawCollage(ctx, shown, {
         bg: transparent ? null : bg,
-        placeholder: PLACEHOLDER,
+        placeholder: cssVar('--stage-empty'),
         photo: (k) => {
           const s = shownSlots[k];
           const img = s?.img ? images[s.img] : null;
@@ -823,12 +829,12 @@ export default function Collage() {
       });
       if (mode === 'photos' && shown === base) {
         const k = shown.w / stageW;
-        if (selected !== null) drawOutline(ctx, shown, selected, ACCENT, 3 * k);
-        if (swapFrom !== null && swapFrom !== selected) drawOutline(ctx, shown, swapFrom, ACCENT, 3 * k, true);
+        if (selected !== null) drawOutline(ctx, shown, selected, INK, 3 * k);
+        if (swapFrom !== null && swapFrom !== selected) drawOutline(ctx, shown, swapFrom, INK, 3 * k, true);
       }
     });
     return () => cancelAnimationFrame(frame);
-  }, [shown, base, shownSlots, images, bg, transparent, mode, selected, swapFrom, stageW]);
+  }, [shown, base, shownSlots, images, bg, transparent, mode, selected, swapFrom, stageW, theme]);
 
   // ----- export -----
 
@@ -942,7 +948,7 @@ export default function Collage() {
             <path
               key={i}
               d={`M${f * stageW} 0V${stageH}M0 ${f * stageH}H${stageW}`}
-              stroke={`rgba(255,225,77,${half ? 0.35 : 0.18})`}
+              stroke={`rgba(${ink},${half ? 0.45 : 0.25})`}
               strokeWidth={1}
               strokeDasharray={half ? undefined : '4 4'}
             />
@@ -950,7 +956,7 @@ export default function Collage() {
         })}
       {shapes.map((s, i) =>
         pending?.index === i ? null : (
-          <path key={i} d={shapePath(s, stageW, stageH)} fill="none" stroke="rgba(255,225,77,0.6)" strokeWidth={1} strokeDasharray="5 4" />
+          <path key={i} d={shapePath(s, stageW, stageH)} fill="none" stroke={`rgba(${ink},0.7)`} strokeWidth={1} strokeDasharray="5 4" />
         )
       )}
       {snapOn &&
@@ -965,11 +971,11 @@ export default function Collage() {
             strokeWidth={1.2}
           />
         ))}
-      {active?.gx !== undefined && <path d={`M${active.gx * stageW} 0V${stageH}`} stroke={ACCENT} strokeWidth={1.2} strokeDasharray="5 4" />}
-      {active?.gy !== undefined && <path d={`M0 ${active.gy * stageH}H${stageW}`} stroke={ACCENT} strokeWidth={1.2} strokeDasharray="5 4" />}
+      {active?.gx !== undefined && <path d={`M${active.gx * stageW} 0V${stageH}`} stroke={INK} strokeWidth={1.2} strokeDasharray="5 4" />}
+      {active?.gy !== undefined && <path d={`M0 ${active.gy * stageH}H${stageW}`} stroke={INK} strokeWidth={1.2} strokeDasharray="5 4" />}
       {pending && (
         <g>
-          <path d={shapePath(pending.shape, stageW, stageH)} fill="none" stroke={ACCENT} strokeWidth={2} strokeLinecap="round" />
+          <path d={shapePath(pending.shape, stageW, stageH)} fill="none" stroke={INK} strokeWidth={2} strokeLinecap="round" />
           {pending.shape.type === 'curve' && (() => {
             const s = pending.shape;
             const c = control(s);
@@ -977,7 +983,7 @@ export default function Collage() {
               <path
                 d={`M${s.a.x * stageW} ${s.a.y * stageH}L${c.x * stageW} ${c.y * stageH}L${s.b.x * stageW} ${s.b.y * stageH}`}
                 fill="none"
-                stroke="rgba(255,225,77,0.4)"
+                stroke={`rgba(${ink},0.5)`}
                 strokeDasharray="3 3"
               />
             );
@@ -1013,7 +1019,7 @@ export default function Collage() {
         if (y < 0) y = active.p.y * stageH + 18;
         return (
           <g>
-            {active.hit && <circle cx={active.hit.x * stageW} cy={active.hit.y * stageH} r={13} fill="none" stroke={ACCENT} strokeWidth={2} />}
+            {active.hit && <circle cx={active.hit.x * stageW} cy={active.hit.y * stageH} r={13} fill="none" stroke={INK} strokeWidth={2} />}
             <rect x={x} y={y} width={w} height={24} rx={6} fill="#0d0e11" stroke={ACCENT} />
             <text x={x + w / 2} y={y + 12} className="cm-readout" textAnchor="middle" dominantBaseline="central">
               {txt}
@@ -1086,7 +1092,7 @@ export default function Collage() {
                 <svg className="cm-ruler cm-ruler-top" width={stageW} height={RULER} viewBox={`0 0 ${stageW} ${RULER}`} aria-hidden="true">
                   {ticks(stageW).map(({ i, v, l }) => (
                     <g key={i}>
-                      <path d={`M${v} ${RULER}v${-l}`} stroke="#4a505c" />
+                      <path d={`M${v} ${RULER}v${-l}`} stroke="var(--ruler)" />
                       {i % 4 === 0 && i > 0 && i < 16 && (
                         <text x={v + 3} y={10} className="cm-ruler-label">{fraction(i / 16)}</text>
                       )}
@@ -1097,7 +1103,7 @@ export default function Collage() {
                 <svg className="cm-ruler cm-ruler-left" width={RULER} height={stageH} viewBox={`0 0 ${RULER} ${stageH}`} aria-hidden="true">
                   {ticks(stageH).map(({ i, v, l }) => (
                     <g key={i}>
-                      <path d={`M${RULER} ${v}h${-l}`} stroke="#4a505c" />
+                      <path d={`M${RULER} ${v}h${-l}`} stroke="var(--ruler)" />
                       {i % 4 === 0 && i > 0 && i < 16 && (
                         <text x={10} y={v + 3} className="cm-ruler-label" transform={`rotate(-90 10 ${v + 3})`}>{fraction(i / 16)}</text>
                       )}

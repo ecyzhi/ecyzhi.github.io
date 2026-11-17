@@ -23,6 +23,43 @@ const canonical = new URL(Astro.url.pathname, site.url).href;
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <meta name="theme-color" content="#0D0E11" />
+    <script is:inline>
+      // Pick the theme before first paint so there is no flash: a saved choice
+      // wins, otherwise follow the system setting (and keep following it).
+      (function () {
+        var root = document.documentElement;
+        var mq = window.matchMedia('(prefers-color-scheme: light)');
+        var saved = function () {
+          try {
+            var t = localStorage.getItem('theme');
+            return t === 'light' || t === 'dark' ? t : null;
+          } catch (e) {
+            return null;
+          }
+        };
+        var apply = function (t) {
+          root.dataset.theme = t;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', t === 'light' ? '#F6F7F9' : '#0D0E11');
+          window.dispatchEvent(new CustomEvent('themechange', { detail: t }));
+        };
+        apply(saved() || (mq.matches ? 'light' : 'dark'));
+        mq.addEventListener('change', function (e) {
+          if (!saved()) apply(e.matches ? 'light' : 'dark');
+        });
+        // t is 'light', 'dark' or 'system' (forget the choice, follow the OS).
+        window.__setTheme = function (t) {
+          try {
+            if (t === 'system') localStorage.removeItem('theme');
+            else localStorage.setItem('theme', t);
+          } catch (e) {}
+          apply(t === 'system' ? (mq.matches ? 'light' : 'dark') : t);
+        };
+        window.__themePref = function () {
+          return saved() || 'system';
+        };
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />

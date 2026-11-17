@@ -109,7 +109,7 @@
   -webkit-text-fill-color: var(--faint);
 }
 .jwt-editor textarea::selection {
-  background: rgba(255, 225, 77, 0.28);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .t-h {
   color: var(--accent);
@@ -178,13 +178,13 @@ textarea.jwt-text {
 }
 .jwt-verify.valid {
   color: var(--on-accent);
-  background: var(--accent);
+  background: var(--accent-fill);
   font-weight: 600;
 }
 .jwt-verify.invalid,
 .jwt-verify.error {
-  color: #ffb4a8;
-  background: rgba(255, 120, 100, 0.1);
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 .jwt-seg {
@@ -206,7 +206,7 @@ textarea.jwt-text {
   cursor: pointer;
 }
 .jwt-seg button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
@@ -244,13 +244,13 @@ textarea.jwt-text {
   border-left-color: var(--accent);
 }
 .jwt-banner.warn {
-  border-left-color: #f0a050;
+  border-left-color: var(--warn-strong);
 }
 .jwt-banner.bad {
-  border-left-color: #ff7864;
+  border-left-color: var(--danger-strong);
 }
 .jwt-banner.bad strong {
-  color: #ffb4a8;
+  color: var(--danger);
 }
 
 .jwt-json {
@@ -340,10 +340,10 @@ textarea.jwt-text {
   line-height: 1.5;
 }
 .jwt-note.warn {
-  color: #f6c48a;
+  color: var(--warn);
 }
 .jwt-note.bad {
-  color: #ffb4a8;
+  color: var(--danger);
   margin-bottom: 10px;
 }
 

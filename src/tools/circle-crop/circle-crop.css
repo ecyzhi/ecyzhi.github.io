@@ -125,7 +125,7 @@
   cursor: pointer;
 }
 .cc-seg button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
@@ -235,7 +235,7 @@
 
 .cc-error {
   margin: 0;
-  color: #ffb4a8;
+  color: var(--danger);
   font-size: 14px;
 }
 
