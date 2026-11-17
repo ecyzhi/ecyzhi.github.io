@@ -460,9 +460,9 @@ export default function LoanCalculator() {
 
             <section className="ln-card ln-table-card" aria-labelledby={`${uid}-sched`}>
               <div className="ln-table-head">
-                <h3 id={`${uid}-sched`}>
+                <h2 id={`${uid}-sched`}>
                   Schedule <span className="ln-unit mono">{fmt.symbol}</span>
-                </h3>
+                </h2>
                 <div className="ln-seg ln-seg-sm" role="group" aria-label="Show schedule by">
                   <button type="button" aria-pressed={view === 'year'} onClick={() => setView('year')}>
                     Yearly

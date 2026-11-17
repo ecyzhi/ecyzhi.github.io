@@ -9,8 +9,10 @@ import { site } from '../data/site';
 interface Props {
   title?: string;
   description?: string;
+  /** Keep the page out of search results (used by the 404 page). */
+  noindex?: boolean;
 }
-const { title, description = site.description } = Astro.props;
+const { title, description = site.description, noindex = false } = Astro.props;
 const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · Software engineer`;
 const canonical = new URL(Astro.url.pathname, site.url).href;
 ---
@@ -21,7 +23,7 @@ const canonical = new URL(Astro.url.pathname, site.url).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
     <meta name="theme-color" content="#0D0E11" />
     <script is:inline>
       // Pick the theme before first paint so there is no flash: a saved choice
@@ -70,7 +72,7 @@ const canonical = new URL(Astro.url.pathname, site.url).href;
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={new URL('/icon-512.png', site.url).href} />
     <meta name="twitter:card" content="summary" />
     <slot name="head" />
