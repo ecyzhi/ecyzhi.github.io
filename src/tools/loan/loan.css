@@ -47,7 +47,6 @@
 }
 .ln-hint {
   color: var(--faint);
-  opacity: 0.8;
 }
 
 .ln-note {
@@ -343,7 +342,7 @@
   gap: 12px;
   margin-bottom: 12px;
 }
-.ln-table-head h3 {
+.ln-table-head h2 {
   font-size: 16px;
 }
 .ln-unit {

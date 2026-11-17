@@ -99,7 +99,7 @@ function CopyButton({ value, label, text = 'Copy' }: { value: string; label: str
     timer.current = window.setTimeout(() => setState('idle'), 1400);
   };
   return (
-    <button type="button" className="ts-copy" onClick={onClick} aria-label={`Copy ${label}`} disabled={!value}>
+    <button type="button" className="ts-copy" onClick={onClick} aria-label={text === 'Copy' ? `Copy ${label}` : `${text}, ${label}`} disabled={!value}>
       {state === 'ok' ? 'Copied' : state === 'fail' ? 'Failed' : text}
     </button>
   );
@@ -119,19 +119,72 @@ function Row({ label, value }: { label: string; value: string }) {
 
 type ZoneOption = { id: string; label: string };
 
+type ZoneOptions = { zones: ZoneOption[]; ensureAll: () => void };
+
+/**
+ * Labels for every time zone ("Asia/Tokyo · JST, UTC+09:00"). Building all 400-odd
+ * at once blocks a phone for half a second, so they are built a few at a time while
+ * the browser is idle, and all at once only if a zone list is opened before that.
+ */
+function useZoneOptions(zoneIds: string[], local: string): ZoneOptions {
+  const built = useRef<ZoneOption[]>([]);
+  const [zones, setZones] = useState<ZoneOption[]>([]);
+
+  const label = useCallback(
+    (z: string, at: number) => (z === local ? `${zoneLabel(z, at)} · yours` : zoneLabel(z, at)),
+    [local],
+  );
+
+  const ensureAll = useCallback(() => {
+    if (built.current.length >= zoneIds.length) return;
+    const at = Date.now();
+    for (let i = built.current.length; i < zoneIds.length; i++) built.current.push({ id: zoneIds[i], label: label(zoneIds[i], at) });
+    setZones(built.current.slice());
+  }, [zoneIds, label]);
+
+  useEffect(() => {
+    const ric: (cb: (d: { timeRemaining: () => number }) => void) => number =
+      window.requestIdleCallback ?? ((cb) => window.setTimeout(() => cb({ timeRemaining: () => 8 }), 50));
+    const cancel: (id: number) => void = window.cancelIdleCallback ?? window.clearTimeout;
+    let id = 0;
+    const step = (d: { timeRemaining: () => number }) => {
+      const at = Date.now();
+      while (built.current.length < zoneIds.length && d.timeRemaining() > 2) {
+        const z = zoneIds[built.current.length];
+        built.current.push({ id: z, label: label(z, at) });
+      }
+      if (built.current.length < zoneIds.length) id = ric(step);
+      else setZones(built.current.slice());
+    };
+    id = ric(step);
+    return () => cancel(id);
+  }, [zoneIds, label]);
+
+  return useMemo(() => ({ zones, ensureAll }), [zones, ensureAll]);
+}
+
 // Memoised so the 400-odd options don't re-render on every clock tick.
 const ZoneSelect = memo(function ZoneSelect({
   value,
-  zones,
+  options,
   onChange,
 }: {
   value: string;
-  zones: ZoneOption[];
+  options: ZoneOptions;
   onChange: (z: string) => void;
 }) {
+  const { zones, ensureAll } = options;
+  // Until the full list is ready, show just the chosen zone.
+  const list = zones.length ? zones : [{ id: value, label: zoneLabel(value, Date.now()) }];
   return (
-    <select className="ts-input" value={value} onChange={(e) => onChange(e.target.value)}>
-      {zones.map((z) => (
+    <select
+      className="ts-input"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onFocus={ensureAll}
+      onPointerDown={ensureAll}
+    >
+      {list.map((z) => (
         <option key={z.id} value={z.id}>
           {z.label}
         </option>
@@ -169,11 +222,13 @@ function defaultBoard(local: string) {
   return Array.from(new Set(picks));
 }
 
-function ZoneBoard({
+// Memoised: while live it gets the time rounded to the second, so it redraws once a
+// second rather than on every clock tick.
+const ZoneBoard = memo(function ZoneBoard({
   ms,
   local,
   zoneIds,
-  zones,
+  zoneOptions,
   isLive,
   onSetMs,
   onFreeze,
@@ -182,7 +237,7 @@ function ZoneBoard({
   ms: number;
   local: string;
   zoneIds: string[];
-  zones: ZoneOption[];
+  zoneOptions: ZoneOptions;
   isLive: boolean;
   onSetMs: (ms: number) => void;
   onFreeze: () => void;
@@ -258,7 +313,7 @@ function ZoneBoard({
       <div className="ts-from">
         <label className="ts-field ts-from-zone">
           <span className="ts-label">Convert from</span>
-          <ZoneSelect value={fromZone} zones={zones} onChange={onFromZone} />
+          <ZoneSelect value={fromZone} options={zoneOptions} onChange={onFromZone} />
         </label>
         <label className="ts-field">
           <span className="ts-label">Date</span>
@@ -387,16 +442,13 @@ function ZoneBoard({
       </ul>
     </section>
   );
-}
+});
 
 export default function Timestamp() {
   const now = useLiveNow();
   const local = useMemo(localZone, []);
   const zoneIds = useMemo(allZones, []);
-  const zones = useMemo(() => {
-    const at = Date.now();
-    return zoneIds.map((z) => ({ id: z, label: z === local ? `${zoneLabel(z, at)} · yours` : zoneLabel(z, at) }));
-  }, [zoneIds, local]);
+  const zoneOptions = useZoneOptions(zoneIds, local);
 
   const [mode, setMode] = useState<'text' | 'pick'>('text');
   // Live: the converter follows the current time until you type, pick or edit something.
@@ -430,15 +482,19 @@ export default function Timestamp() {
     setPick((p) => ({ ...p, ...toPickFields(whole, p.zone) }));
   }, []);
 
-  const freeze = () => {
-    if (isLive) loadMs(now);
-  };
+  // Kept stable (reading the latest values from refs) so the memoised zone board
+  // doesn't redraw on every clock tick.
+  const latest = useRef({ isLive, now });
+  latest.current = { isLive, now };
+  const freeze = useCallback(() => {
+    if (latest.current.isLive) loadMs(latest.current.now);
+  }, [loadMs]);
 
-  const goLive = () => {
+  const goLive = useCallback(() => {
     setMode('text');
     setUnit('auto');
     setLive(true);
-  };
+  }, []);
 
   const switchMode = (next: 'text' | 'pick') => {
     if (next === mode) return;
@@ -569,7 +625,7 @@ export default function Timestamp() {
               </div>
               <label className="ts-field">
                 <span className="ts-label">In time zone</span>
-                <ZoneSelect value={pick.zone} zones={zones} onChange={onPickZone} />
+                <ZoneSelect value={pick.zone} options={zoneOptions} onChange={onPickZone} />
               </label>
             </>
           )}
@@ -633,10 +689,10 @@ export default function Timestamp() {
 
       {ms !== null && (
         <ZoneBoard
-          ms={ms}
+          ms={isLive ? Math.floor(ms / 1000) * 1000 : ms}
           local={local}
           zoneIds={zoneIds}
-          zones={zones}
+          zoneOptions={zoneOptions}
           isLive={isLive}
           onSetMs={loadMs}
           onFreeze={freeze}

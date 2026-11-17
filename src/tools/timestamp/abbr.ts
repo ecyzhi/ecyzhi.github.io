@@ -182,6 +182,9 @@ export const AMBIGUOUS: Record<string, string> = {
 
 type OffsetFn = (ms: number, tz: string) => number;
 
+// Creating an Intl.DateTimeFormat is slow, so keep one per zone.
+const nameFmtCache = new Map<string, Intl.DateTimeFormat>();
+
 /** The abbreviation in force for a zone at an instant, e.g. MYT, PDT, CEST, or UTC+5 as a last resort. */
 export function abbrFor(tz: string, ms: number, offsetMinutes: OffsetFn): string {
   const names = ZONE_ABBR[tz];
@@ -194,7 +197,12 @@ export function abbrFor(tz: string, ms: number, offsetMinutes: OffsetFn): string
     return off > Math.min(jan, jul) ? names[1] : names[0];
   }
   try {
-    const name = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+    let f = nameFmtCache.get(tz);
+    if (!f) {
+      f = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' });
+      nameFmtCache.set(tz, f);
+    }
+    const name = f
       .formatToParts(new Date(ms))
       .find((p) => p.type === 'timeZoneName')?.value;
     if (name && /^[A-Z]{2,5}$/.test(name)) return name;

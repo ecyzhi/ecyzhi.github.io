@@ -111,6 +111,9 @@ function carrySlots(slots: Slot[], count: number): Slot[] {
   return Array.from({ length: count }, (_, i) => ({ img: imgs[i] ?? null, view: DEFAULT_VIEW }));
 }
 
+const fitHeight = () => Math.max(280, window.innerHeight * (window.innerWidth <= 640 ? 0.62 : 0.72));
+const screenDpr = () => Math.min(window.devicePixelRatio || 1, 2);
+
 export default function Collage() {
   const [ratioKey, setRatioKey] = useState('1:1');
   const [shapes, setShapes] = useState<Shape[]>(() => DEFAULT_TEMPLATE.shapes);
@@ -130,8 +133,10 @@ export default function Collage() {
   const [note, setNote] = useState<string | null>(null);
   const [shareable, setShareable] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [maxH, setMaxH] = useState(560);
-  const [dpr, setDpr] = useState(1);
+  // Read the screen up front (this only runs in the browser) so the layout isn't
+  // worked out once for a guessed size and again for the real one.
+  const [maxH, setMaxH] = useState(fitHeight);
+  const [dpr, setDpr] = useState(screenDpr);
 
   // drawing
   const [tool, setTool] = useState<Tool>('line');
@@ -171,11 +176,14 @@ export default function Collage() {
   useLayoutEffect(() => {
     const el = boxRef.current;
     if (!el) return;
+    // Measure now as well, so the first paint already has the canvas at its real size.
+    const r = el.getBoundingClientRect();
+    setBox({ w: r.width, h: r.height });
     const ro = new ResizeObserver(([entry]) => setBox({ w: entry.contentRect.width, h: entry.contentRect.height }));
     ro.observe(el);
     const fit = () => {
-      setMaxH(Math.max(280, window.innerHeight * (window.innerWidth <= 640 ? 0.62 : 0.72)));
-      setDpr(Math.min(window.devicePixelRatio || 1, 2));
+      setMaxH(fitHeight());
+      setDpr(screenDpr());
     };
     fit();
     window.addEventListener('resize', fit);
@@ -1361,7 +1369,7 @@ export default function Collage() {
                 onClick={() => setBg(b.value)}
               />
             ))}
-            <label className="cm-swatch cm-custom" title="Custom colour" aria-pressed={!BACKGROUNDS.some((b) => b.value === bg)}>
+            <label className="cm-swatch cm-custom" title="Custom colour" data-active={!BACKGROUNDS.some((b) => b.value === bg) || undefined}>
               <input
                 type="color"
                 value={bg.startsWith('#') ? bg : '#ffffff'}

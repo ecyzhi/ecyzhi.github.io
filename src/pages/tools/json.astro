@@ -110,14 +110,21 @@ const faqs = [
     font-size: 13px;
     color: var(--muted);
   }
+  /* Roughly the editor's height, capped at the screen, so nothing below
+     jumps when it loads. */
   .loading {
-    min-height: 420px;
+    min-height: min(1121px, 100svh);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--faint);
     font-size: 13px;
     gap: 12px;
+  }
+  @media (min-width: 860px) {
+    .loading {
+      min-height: min(648px, 100svh);
+    }
   }
   .how,
   .faq {
