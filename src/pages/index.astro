@@ -1,249 +1,332 @@
 ---
 import Base from '../layouts/Base.astro';
 import ToolCard from '../components/ToolCard.astro';
-import Experience from '../components/Experience.astro';
-import Contact from '../components/Contact.astro';
-import { tools } from '../data/tools';
-import { skills } from '../data/experience';
-import { site } from '../data/site';
+import { tools, categories } from '../data/tools';
 
-const featured = tools.slice(0, 4);
-const liveTools = tools.filter((t) => t.live).map((t) => t.slug);
+// Live tools first, then "soon" ones, each in ship order.
+const ordered = [...tools.filter((t) => t.live), ...tools.filter((t) => !t.live)];
+const catId = (value: string) => categories.find((c) => c.value === value)?.id ?? value.toLowerCase();
+const catLabel = (value: string) => categories.find((c) => c.value === value)?.label ?? value;
+
+const chips = [
+  { id: 'featured', label: 'Featured', count: tools.filter((t) => t.featured).length },
+  { id: 'all', label: 'All', count: tools.length },
+  ...categories.map((c) => ({ id: c.id, label: c.label, count: tools.filter((t) => t.category === c.value).length })),
+];
 ---
-<Base>
-  <section class="wrap hero">
-    <div class="hero-grid">
-      <div>
-        <p class="eyebrow hello">// hello, my name is</p>
-        <h1>{site.name}.</h1>
-        <p class="intro">
-          Software engineer in Malaysia building mobile and web apps with Flutter, plus the occasional free tool that runs
-          right in your browser.
-        </p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="/tools/">
-            Browse tools
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-          </a>
-          <a class="btn btn-ghost" href={site.resume} download>Download resume</a>
-        </div>
-      </div>
-      <div class="term mono" aria-hidden="true">
-        <div class="dots"><span></span><span></span><span></span></div>
-        <div class="term-body">
-          <div><b>$</b> whoami</div>
-          <div class="out">software engineer · flutter · web</div>
-          <div><b>$</b> ls ./stack</div>
-          <div class="out">flutter/ dart/ js/ .net/ firebase/</div>
-          <div><b>$</b> ls ./tools --live</div>
-          <div class="out">{liveTools.join('  ')}</div>
-          <div><b>$</b> <span class="caret"></span></div>
-        </div>
-      </div>
+<Base
+  title="Free browser tools"
+  description="Free image and developer tools that run entirely in your browser. Your files never leave your device."
+>
+  <section class="wrap hub-top">
+    <p class="eyebrow">// tools</p>
+    <h1>Free tools, done in your browser</h1>
+    <p class="lede intro">
+      Small utilities for images and code that run on your device. Nothing is uploaded and there's no sign-up.
+    </p>
+
+    <div class="search">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <label for="tool-search" class="visually-hidden">Search tools</label>
+      <input
+        id="tool-search"
+        type="search"
+        placeholder="Search tools"
+        autocomplete="off"
+        spellcheck="false"
+        enterkeyhint="search"
+      />
+      <kbd class="mono hint" aria-hidden="true">/</kbd>
+    </div>
+
+    <div class="chips" role="group" aria-label="Filter by category">
+      {chips.map((c) => (
+        <button type="button" class="chip mono" data-chip={c.id} aria-pressed={c.id === 'featured' ? 'true' : 'false'}>
+          {c.label}<span class="count">{c.count}</span>
+        </button>
+      ))}
     </div>
   </section>
 
-  <section id="tools" class="wrap section">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">01 / tools</p>
-        <h2 class="section-title">Free tools, done in your browser</h2>
-        <p class="lede sub">Your files never leave your device. New tools ship one at a time.</p>
-      </div>
-      <a class="mono all" href="/tools/">all tools →</a>
-    </div>
+  <section class="wrap results" aria-label="Tools">
+    <p class="status mono" id="tool-status" aria-live="polite"></p>
     <div class="tool-grid">
-      {featured.map((tool) => <ToolCard tool={tool} />)}
-    </div>
-  </section>
-
-  <section id="about" class="wrap section">
-    <p class="eyebrow">02 / about</p>
-    <div class="two">
-      <div>
-        <h2 class="section-title about-title">Beautiful interfaces, intuitive experiences</h2>
-        <p class="lede para">Located in Malaysia. I have built several frontend and backend applications throughout my career.</p>
-        <p class="lede para">
-          I'm passionate about beautiful interfaces and creating intuitive user experiences. Currently, I'm focused on
-          building mobile and web applications.
-        </p>
-        <a class="mono more" href="/about/">more about me →</a>
-      </div>
-      <div>
-        <div class="label mono">skills</div>
-        <div class="tags">
-          {[...skills.frameworks, ...skills.languages].map((s) => <span class="tag">{s}</span>)}
+      {ordered.map((tool) => (
+        <div
+          class="item"
+          data-cat={catId(tool.category)}
+          data-featured={tool.featured ? 'true' : undefined}
+          data-text={`${tool.name} ${tool.blurb} ${catLabel(tool.category)} ${tool.category} ${tool.slug} ${tool.category === 'Media' ? 'image photo picture' : 'developer code'}`.toLowerCase()}
+          hidden={!tool.featured}
+        >
+          <ToolCard tool={tool} />
         </div>
-        <div class="label mono">tools</div>
-        <div class="tags">
-          {skills.tools.map((s) => <span class="tag tag-soft">{s}</span>)}
-        </div>
-      </div>
+      ))}
     </div>
-  </section>
-
-  <section id="experience" class="wrap section">
-    <p class="eyebrow">03 / experience</p>
-    <h2 class="section-title exp-title">Where I've worked</h2>
-    <Experience />
-  </section>
-
-  <section id="contact" class="wrap section last">
-    <Contact eyebrow="04 / contact" />
+    <div class="empty card" id="tool-empty" hidden>
+      <p class="empty-title">No tools match <span class="mono" id="tool-empty-q"></span></p>
+      <button type="button" class="btn btn-ghost" id="tool-clear">Clear search</button>
+    </div>
+    <div class="privacy mono">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+      your files never leave your device
+    </div>
   </section>
 </Base>
 
+<script>
+  const input = document.querySelector<HTMLInputElement>('#tool-search')!;
+  const chips = [...document.querySelectorAll<HTMLButtonElement>('.chip')];
+  const items = [...document.querySelectorAll<HTMLElement>('.results .item')];
+  const status = document.querySelector<HTMLElement>('#tool-status')!;
+  const empty = document.querySelector<HTMLElement>('#tool-empty')!;
+  const emptyQ = document.querySelector<HTMLElement>('#tool-empty-q')!;
+  const ids = chips.map((c) => c.dataset.chip!);
+
+  const fromHash = () => {
+    const h = location.hash.slice(1).toLowerCase();
+    return ids.includes(h) ? h : 'featured';
+  };
+  let chip = fromHash();
+
+  function apply() {
+    const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    // A search from Featured looks through every tool, so nothing is missed.
+    const scope = terms.length && chip === 'featured' ? 'all' : chip;
+    let shown = 0;
+    for (const el of items) {
+      const inScope =
+        scope === 'all' || (scope === 'featured' ? el.dataset.featured === 'true' : el.dataset.cat === scope);
+      const text = el.dataset.text ?? '';
+      const match = inScope && terms.every((t) => text.includes(t));
+      el.hidden = !match;
+      if (match) shown++;
+    }
+    chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.chip === chip)));
+    empty.hidden = shown > 0;
+    emptyQ.textContent = `“${input.value.trim()}”`;
+    const where = scope === 'all' ? 'all tools' : chips.find((c) => c.dataset.chip === scope)?.firstChild?.textContent;
+    status.textContent = terms.length
+      ? `${shown} result${shown === 1 ? '' : 's'} in ${where}`
+      : `${shown} tool${shown === 1 ? '' : 's'}`;
+  }
+
+  chips.forEach((c) =>
+    c.addEventListener('click', () => {
+      chip = c.dataset.chip!;
+      history.replaceState(null, '', chip === 'featured' ? location.pathname : `#${chip}`);
+      apply();
+    })
+  );
+  input.addEventListener('input', apply);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && input.value) {
+      input.value = '';
+      apply();
+    }
+  });
+  document.querySelector('#tool-clear')!.addEventListener('click', () => {
+    input.value = '';
+    apply();
+    input.focus();
+  });
+  // "/" jumps to the search box, like most docs sites.
+  document.addEventListener('keydown', (e) => {
+    const t = e.target as HTMLElement;
+    if (e.key === '/' && !e.metaKey && !e.ctrlKey && !t.closest('input, textarea, select, [contenteditable]')) {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+  window.addEventListener('hashchange', () => {
+    chip = fromHash();
+    apply();
+  });
+  apply();
+</script>
+
 <style>
-  .hero {
-    padding-top: clamp(48px, 9vw, 88px);
-    padding-bottom: 72px;
+  .hub-top {
+    padding-top: clamp(40px, 7vw, 72px);
+    padding-bottom: 20px;
   }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: 48px;
-    align-items: center;
-  }
-  .hello {
-    font-size: 14px;
-    margin-bottom: 16px;
+  .eyebrow {
+    margin-bottom: 12px;
   }
   h1 {
-    font-size: clamp(40px, 7vw, 76px);
-    line-height: 1.02;
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.05;
     letter-spacing: -0.03em;
     font-weight: 700;
   }
   .intro {
-    margin-top: 20px;
-    font-size: clamp(18px, 2.2vw, 22px);
-    line-height: 1.5;
-    color: var(--muted);
-    max-width: 560px;
+    margin-top: 14px;
+    max-width: 620px;
+    font-size: 17px;
   }
-  .cta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 32px;
+  .search {
+    position: relative;
+    margin-top: 28px;
+    max-width: 640px;
   }
-  .term {
+  .search input {
+    width: 100%;
+    height: 52px;
+    padding: 0 48px 0 46px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    overflow: hidden;
-    font-size: 13px;
-    line-height: 1.8;
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+    transition: border-color 0.15s;
   }
-  .dots {
-    display: flex;
-    gap: 6px;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--line);
+  .search input::placeholder {
+    color: var(--faint);
   }
-  .dots span {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--line-strong);
+  .search input:hover {
+    border-color: var(--line-strong);
   }
-  .term-body {
-    padding: 16px 18px;
+  .search input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .search input::-webkit-search-cancel-button {
+    filter: grayscale(1) brightness(1.6);
+    cursor: pointer;
+  }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--muted);
+    pointer-events: none;
   }
-  .term-body b {
-    color: var(--accent);
+  .hint {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    color: var(--faint);
+    font-size: 12px;
+    pointer-events: none;
+  }
+  @media (hover: none) {
+    .hint {
+      display: none;
+    }
+  }
+  .search input:focus ~ .hint,
+  .search input:not(:placeholder-shown) ~ .hint {
+    display: none;
+  }
+  .chips {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .chip:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+  .chip[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+  }
+  .count {
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    color: var(--faint);
     font-weight: 400;
   }
-  .out {
-    color: var(--text);
+  .chip[aria-pressed='true'] .count {
+    background: rgba(0, 0, 0, 0.14);
+    color: var(--on-accent);
   }
-  .caret {
-    display: inline-block;
-    width: 8px;
-    height: 15px;
-    background: var(--accent);
-    vertical-align: middle;
+  .results {
+    padding-bottom: 88px;
   }
-  @media (prefers-reduced-motion: no-preference) {
-    .caret {
-      animation: blink 1.1s steps(1) infinite;
-    }
-  }
-  @keyframes blink {
-    50% {
-      opacity: 0;
-    }
-  }
-  .section-head {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-  .sub {
-    margin-top: 8px;
-  }
-  .all,
-  .more {
-    font-size: 14px;
-    text-decoration: none;
-  }
-  .more {
-    display: inline-block;
-    margin-top: 16px;
+  .status {
+    font-size: 13px;
+    color: var(--faint);
+    margin: 8px 0 14px;
+    min-height: 20px;
   }
   .tool-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
-  .two {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 48px;
-  }
-  .about-title {
-    margin-bottom: 16px;
-  }
-  .para + .para {
-    margin-top: 12px;
-  }
-  .para {
-    line-height: 1.7;
-  }
-  .label {
-    font-size: 13px;
-    color: var(--faint);
-    margin-bottom: 10px;
-  }
-  .tags {
+  .item {
     display: flex;
-    flex-wrap: wrap;
+  }
+  .item > :global(*) {
+    flex: 1;
+  }
+  .item[hidden] {
+    display: none;
+  }
+  .empty {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .empty[hidden] {
+    display: none;
+  }
+  .empty-title {
+    margin: 0;
+    color: var(--muted);
+  }
+  .empty-title .mono {
+    color: var(--text);
+  }
+  .privacy {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
-    margin-bottom: 20px;
-  }
-  .exp-title {
-    margin-bottom: 24px;
-  }
-  .last {
-    padding-bottom: 88px;
+    margin-top: 32px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    font-size: 13px;
+    color: var(--muted);
   }
   @media (max-width: 900px) {
     .tool-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .hero-grid,
-    .two {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .term {
-      display: none;
-    }
   }
-  @media (max-width: 440px) {
+  @media (max-width: 480px) {
     .tool-grid {
       grid-template-columns: minmax(0, 1fr);
     }

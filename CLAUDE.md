@@ -22,8 +22,8 @@ There is no test suite. `npm run check && npm run build` is what CI runs on pull
 
 ## Layout
 
-- `src/pages/` — routes. `index.astro` (home: hero, tools, about, experience, contact), `about.astro`, `resume.astro`, `tools/index.astro` (hub), `tools/<slug>.astro` (one page per tool), `404.astro`.
-- `src/data/` — content. `site.ts` (name, links, resume path), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon").
+- `src/pages/` — routes. `index.astro` (home = tools hub: search plus Featured / All / category chips), `about.astro` (all personal info: hero, about, skills, experience, contact), `resume.astro`, `tools/<slug>.astro` (one page per tool), `404.astro`. `/tools/` redirects to `/#all` (set in `astro.config.mjs`).
+- `src/data/` — content. `site.ts` (name, links, resume path), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon", `featured: true` puts it under the home page's Featured chip; `categories` drives the chips).
 - `src/components/` — Astro components shared by pages (header, footer, tool card, experience list, contact block).
 - `src/tools/<slug>/` — each tool's React editor, mounted with `client:only="react"` so no JS loads on non-tool pages. `src/tools/shared/` holds code meant for reuse by later media tools (file drop zone, image loading, PNG export and download).
 - `public/` — copied as is: `CNAME`, favicon and app icons, `assets/resume/Resume.pdf`, and `flutter_service_worker.js`.
