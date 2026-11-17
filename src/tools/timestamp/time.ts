@@ -1,4 +1,5 @@
 // Pure date helpers for the timestamp converter. No DOM, no React.
+import { ABBR_OFFSET, AMBIGUOUS, abbrFor, abbrsOf } from './abbr';
 
 export type Unit = 'auto' | 's' | 'ms' | 'us' | 'ns';
 export type ConcreteUnit = Exclude<Unit, 'auto'>;
@@ -47,6 +48,18 @@ export function parseInput(raw: string, unit: Unit): ParseResult {
   let text = s;
   let note = 'Read as a date.';
   const isoLike = /^\d{4}-\d{2}-\d{2}/.test(text);
+
+  // A trailing abbreviation like "PST" or "MYT" becomes a numeric offset.
+  const ab = /\s+([A-Za-z]{2,5})$/.exec(text);
+  const abKey = ab?.[1].toUpperCase();
+  if (ab && abKey && abKey in ABBR_OFFSET && !['UTC', 'GMT', 'Z'].includes(abKey)) {
+    const off = ABBR_OFFSET[abKey];
+    const sign = off < 0 ? '-' : '+';
+    const hh = String(Math.floor(Math.abs(off) / 60)).padStart(2, '0');
+    const mm = String(Math.abs(off) % 60).padStart(2, '0');
+    text = text.slice(0, ab.index) + (isoLike ? `${sign}${hh}:${mm}` : ` GMT${sign}${hh}${mm}`);
+    note = `${abKey} read as UTC${formatOffset(off)}.` + (AMBIGUOUS[abKey] ? ` That's ${AMBIGUOUS[abKey]}.` : '');
+  }
   if (isoLike) {
     // Safari only reads strict ISO 8601, so tidy the common variants first.
     text = text.replace(/^(\d{4}-\d{2}-\d{2})[ ]+(?=\d)/, '$1T');
@@ -57,12 +70,12 @@ export function parseInput(raw: string, unit: Unit): ParseResult {
       text += 'T00:00:00';
       note = 'Read as midnight, your local time.';
     } else if (/T[\d:.]+$/.test(text)) {
-      note = 'No time zone given, so read as your local time.';
+      if (!ab || !(abKey! in ABBR_OFFSET)) note = 'No time zone given, so read as your local time.';
     }
   }
   const ms = Date.parse(text);
   if (Number.isNaN(ms)) {
-    return { ok: false, error: 'Not a timestamp or a date this browser can read. Try 1794823661 or 2026-11-16T10:07:41Z.' };
+    return { ok: false, error: 'Not a timestamp or a date this browser can read. Try 1794823661000 or 2026-11-16 10:07 PST.' };
   }
   return { ok: true, ms, note };
 }
@@ -164,11 +177,10 @@ export function humanIn(ms: number, tz: string): string {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short',
     });
     humanCache.set(tz, f);
   }
-  return f.format(new Date(ms));
+  return `${f.format(new Date(ms))} ${abbr(tz, ms)}`;
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
@@ -236,6 +248,52 @@ export function allZones(): string[] {
   return ['UTC', ...Array.from(set).sort()];
 }
 
+export function abbr(tz: string, ms: number) {
+  return abbrFor(tz, ms, offsetMinutes);
+}
+
 export function zoneLabel(tz: string, at: number) {
-  return `${tz.replace(/_/g, ' ')} (UTC${formatOffset(offsetMinutes(at, tz))})`;
+  const a = abbr(tz, at);
+  const off = `UTC${formatOffset(offsetMinutes(at, tz))}`;
+  return `${tz.replace(/_/g, ' ')} · ${a.startsWith('UTC') ? off : `${a}, ${off}`}`;
+}
+
+/** The city part of a zone id: America/Los_Angeles → Los Angeles. */
+// Some browsers still list zones under their old city names.
+const RENAMED: Record<string, string> = {
+  'Asia/Calcutta': 'Kolkata',
+  'Asia/Saigon': 'Ho Chi Minh',
+  'Asia/Rangoon': 'Yangon',
+  'Asia/Katmandu': 'Kathmandu',
+  'Europe/Kiev': 'Kyiv',
+  'America/Buenos_Aires': 'Buenos Aires',
+};
+
+export function cityOf(tz: string) {
+  if (tz === 'UTC') return 'UTC';
+  return RENAMED[tz] ?? tz.split('/').pop()!.replace(/_/g, ' ');
+}
+
+/** Find zones by city, region, abbreviation (PST, MYT) or offset (+8, UTC-5, GMT+5:30). */
+export function searchZones(query: string, zones: string[], at: number, limit = 8): string[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const offM = /^(?:utc|gmt)?\s*([+-−])\s*(\d{1,2})(?::?(\d{2}))?$/.exec(q);
+  const want = offM ? (offM[1] === '+' ? 1 : -1) * (Number(offM[2]) * 60 + Number(offM[3] || 0)) : null;
+  const scored: [number, string][] = [];
+  for (const z of zones) {
+    const id = z.toLowerCase();
+    const city = cityOf(z).toLowerCase();
+    const abbrs = [abbr(z, at), ...abbrsOf(z)].map((a) => a.toLowerCase());
+    let score = -1;
+    if (abbrs.includes(q)) score = 0;
+    else if (city.startsWith(q)) score = 1;
+    else if (want !== null && offsetMinutes(at, z) === want) score = 2;
+    else if (city.includes(q) || id.replace(/_/g, ' ').includes(q) || id.includes(q)) score = 3;
+    if (score >= 0) scored.push([score, z]);
+  }
+  // Well-known zones (ones with a named abbreviation) first, then alphabetical.
+  const known = (z: string) => (abbrsOf(z).length ? 0 : 1);
+  scored.sort((a, b) => a[0] - b[0] || known(a[1]) - known(b[1]) || a[1].localeCompare(b[1]));
+  return scored.slice(0, limit).map((x) => x[1]);
 }
