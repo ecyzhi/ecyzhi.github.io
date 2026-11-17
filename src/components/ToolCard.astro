@@ -8,7 +8,7 @@ const { tool } = Astro.props;
 ---
 {tool.live ? (
   <a class="tool live" href={`/tools/${tool.slug}/`}>
-    <div class="top"><ToolIcon icon={tool.icon} active /><span class="badge">LIVE</span></div>
+    <div class="top"><ToolIcon icon={tool.icon} active /></div>
     <div class="name">{tool.name}</div>
     <div class="blurb">{tool.blurb}</div>
   </a>
@@ -48,15 +48,6 @@ const { tool } = Astro.props;
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  .badge {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--on-accent);
-    background: var(--accent);
-    padding: 3px 8px;
-    border-radius: 99px;
   }
   .soon-label {
     font-family: var(--font-mono);
