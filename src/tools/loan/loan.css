@@ -134,7 +134,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 .ln-seg button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
@@ -182,7 +182,7 @@
   background: var(--bg);
 }
 .ln-bar-p {
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 .ln-bar-i {
   background: var(--muted);
@@ -197,7 +197,7 @@
   vertical-align: 1px;
 }
 .ln-dot-p {
-  background: var(--accent);
+  background: var(--accent-fill);
 }
 .ln-dot-i {
   background: var(--muted);
@@ -231,8 +231,8 @@
   margin-top: 16px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(255, 225, 77, 0.08);
-  border: 1px solid rgba(255, 225, 77, 0.25);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   font-size: 14px;
   color: var(--text-2);
 }
@@ -285,7 +285,7 @@
   vector-effect: non-scaling-stroke;
 }
 .ln-area {
-  fill: rgba(255, 225, 77, 0.1);
+  fill: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .ln-line-p,
 .ln-line-i {

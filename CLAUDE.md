@@ -8,6 +8,8 @@ Source for the personal site at `ecyzhi.com`: an [Astro](https://astro.build) st
 
 Design style is "Midnight Workshop": dark `#0D0E11` ground, logo yellow `#FFE14D` as the only accent, Inter for text and JetBrains Mono for labels (self-hosted via `@fontsource-variable`). Tokens live in `src/styles/global.css`; reuse them rather than hard-coding colours.
 
+There is a light theme too. `data-theme` on `<html>` is set before first paint by an inline script in `src/layouts/Base.astro` (saved choice in `localStorage.theme`, otherwise the system setting, kept in sync live); the header toggle cycles follow system / light / dark. Every colour must come from a token so both themes work. Use `--accent` for accent text, strokes, borders and focus rings (it turns dark amber in light mode) and `--accent-fill` with `--on-accent` text for yellow filled surfaces. Canvas code that needs theme colours reads them with `cssVar()` and re-renders with `useTheme()` from `src/tools/shared/theme.ts`. Overlays drawn on top of user images (crop mask, collage handles) may keep fixed colours.
+
 ## Commands
 
 ```bash

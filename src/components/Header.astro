@@ -13,12 +13,18 @@ const isCurrent = (match: string) =>
 <header class="site-header">
   <div class="wrap bar">
     <a href="/" class="home mono" aria-label={`${site.name}, home`}>ecyzhi<span class="dot">.</span></a>
+    <div class="actions">
     <nav class="links mono" aria-label="Main">
       {links.map((l) => (
         <a href={l.href} aria-current={isCurrent(l.match) ? 'page' : undefined}>{l.label}</a>
       ))}
       <a href="/resume/" class="cta" aria-current={isCurrent('/resume') ? 'page' : undefined}>resume.pdf</a>
     </nav>
+    <button type="button" class="theme-toggle" data-pref="system" aria-label="Theme: follow system" title="Theme: follow system">
+      <svg class="i-system" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"></path></svg>
+      <svg class="i-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      <svg class="i-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11z"></path></svg>
+    </button>
     <details class="menu">
       <summary aria-label="Menu">
         <svg class="open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
@@ -31,10 +37,38 @@ const isCurrent = (match: string) =>
         <a href="/resume/" class="cta">resume.pdf</a>
       </nav>
     </details>
+    </div>
   </div>
 </header>
 
 <script>
+  // Theme toggle cycles: follow system -> the opposite of the system theme ->
+  // the system theme -> follow system, so every click visibly changes something
+  // except the last, which hands control back to the OS. The icon shows the
+  // current setting. The initial theme is applied by the inline script in
+  // Base.astro, which also keeps "system" in sync with the OS.
+  type Pref = 'system' | 'light' | 'dark';
+  const w = window as unknown as { __setTheme: (t: Pref) => void; __themePref: () => Pref };
+  const names: Record<Pref, string> = { system: 'follow system', light: 'light', dark: 'dark' };
+  const mq = window.matchMedia('(prefers-color-scheme: light)');
+  const nextPref = (pref: Pref): Pref => {
+    const os: Pref = mq.matches ? 'light' : 'dark';
+    const other: Pref = os === 'light' ? 'dark' : 'light';
+    return pref === 'system' ? other : pref === other ? os : 'system';
+  };
+  const toggle = document.querySelector<HTMLButtonElement>('.site-header .theme-toggle');
+  const sync = () => {
+    if (!toggle) return;
+    const pref = w.__themePref();
+    toggle.dataset.pref = pref;
+    toggle.setAttribute('aria-label', `Theme: ${names[pref]}. Switch to ${names[nextPref(pref)]}`);
+    toggle.title = `Theme: ${names[pref]}`;
+  };
+  sync();
+  window.addEventListener('themechange', sync);
+  mq.addEventListener('change', sync);
+  toggle?.addEventListener('click', () => w.__setTheme(nextPref(w.__themePref())));
+
   // Close the mobile menu after following an in-page link.
   document.querySelectorAll<HTMLAnchorElement>('.site-header .sheet a').forEach((a) =>
     a.addEventListener('click', () => a.closest('details')?.removeAttribute('open'))
@@ -46,7 +80,7 @@ const isCurrent = (match: string) =>
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(13, 14, 17, 0.88);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line-soft);
@@ -92,14 +126,46 @@ const isCurrent = (match: string) =>
   .links .cta,
   .sheet .cta {
     color: var(--on-accent);
-    background: var(--accent);
+    background: var(--accent-fill);
     padding: 8px 14px;
     border-radius: 8px;
     font-weight: 700;
   }
   .links .cta:hover {
-    background: var(--accent-hover);
+    background: var(--accent-fill-hover);
     color: var(--on-accent);
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  }
+  .theme-toggle:hover {
+    color: var(--text);
+    border-color: var(--line-strong);
+    background: var(--surface);
+  }
+  .theme-toggle svg {
+    display: none;
+  }
+  .theme-toggle[data-pref='system'] .i-system,
+  .theme-toggle[data-pref='light'] .i-light,
+  .theme-toggle[data-pref='dark'] .i-dark {
+    display: block;
   }
   .menu {
     display: none;
@@ -139,7 +205,7 @@ const isCurrent = (match: string) =>
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 16px 40px var(--shadow-strong);
     font-size: 15px;
   }
   .sheet a {
@@ -159,6 +225,14 @@ const isCurrent = (match: string) =>
     }
     .menu {
       display: block;
+    }
+    .actions {
+      gap: 8px;
+    }
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      background: var(--surface);
     }
   }
 </style>

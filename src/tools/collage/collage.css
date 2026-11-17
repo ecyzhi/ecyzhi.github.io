@@ -63,7 +63,7 @@
   white-space: nowrap;
 }
 .cm-seg button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
 }
@@ -142,7 +142,7 @@
   border-radius: 50%;
   border: 1.5px dashed rgba(255, 225, 77, 0.7);
   background: rgba(13, 14, 17, 0.55);
-  color: var(--accent);
+  color: #ffe14d; /* sits on the photo stage, so it keeps the dark-overlay look in both themes */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +370,7 @@
 
 .cm-error {
   margin: 0;
-  color: #ffb4a8;
+  color: var(--danger);
   font-size: 14px;
 }
 
@@ -453,8 +453,8 @@
   background: var(--surface-2);
 }
 .cm-tool[aria-pressed='true'] {
-  background: rgba(255, 225, 77, 0.14);
-  border-color: rgba(255, 225, 77, 0.4);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   color: var(--accent);
 }
 .cm-tool:disabled {
@@ -528,11 +528,11 @@
 .cm-readout {
   font-family: var(--font-mono);
   font-size: 12px;
-  fill: var(--accent);
+  fill: #ffe14d; /* on the dark readout box, in both themes */
 }
 
 .cm-cellbar.is-pending {
-  border: 1px solid rgba(255, 225, 77, 0.45);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   border-radius: 12px;
   padding: 8px 8px 8px 12px;
 }
@@ -541,7 +541,7 @@
 }
 @keyframes cm-nudge {
   50% {
-    box-shadow: 0 0 0 4px rgba(255, 225, 77, 0.25);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -598,8 +598,8 @@
   color: var(--faint);
 }
 .cm-chip[aria-pressed='true'] {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--on-accent);
 }
 .cm-chip[aria-pressed='true'] small {
