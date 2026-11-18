@@ -6,7 +6,6 @@ export const site = {
   location: 'Malaysia',
   description:
     'Yeap Lee Zhi, a software engineer in Malaysia building mobile and web apps with Flutter, plus free tools that run right in your browser.',
-  resume: '/assets/resume/Resume.pdf',
   links: {
     github: 'https://github.com/ecyzhi',
     linkedin: 'https://www.linkedin.com/in/yeapleezhi/',
