@@ -24,11 +24,11 @@ There is no test suite. `npm run check && npm run build` is what CI runs on pull
 
 ## Layout
 
-- `src/pages/` — routes. `index.astro` (home = tools hub: search plus Featured / All / category chips), `about.astro` (all personal info: hero, about, skills, experience, contact), `resume.astro`, `tools/<slug>.astro` (one page per tool), `404.astro`. `/tools/` redirects to `/#all` (set in `astro.config.mjs`).
-- `src/data/` — content. `site.ts` (name, links, resume path), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon", `featured: true` puts it under the home page's Featured chip; `categories` drives the chips).
+- `src/pages/` — routes. `index.astro` (home = tools hub: search plus Featured / All / category chips), `about.astro` (all personal info: hero, about, skills, experience, contact), `tools/<slug>.astro` (one page per tool), `404.astro`. `/tools/` redirects to `/#all` (set in `astro.config.mjs`).
+- `src/data/` — content. `site.ts` (name, links), `experience.ts` (roles and skills), `tools.ts` (tool list in ship order; `live: false` shows as "soon", `featured: true` puts it under the home page's Featured chip; `categories` drives the chips).
 - `src/components/` — Astro components shared by pages (header, footer, tool card, experience list, contact block).
 - `src/tools/<slug>/` — each tool's React editor, mounted with `client:only="react"` so no JS loads on non-tool pages. `src/tools/shared/` holds code meant for reuse by later media tools (file drop zone, image loading, PNG export and download).
-- `public/` — copied as is: `CNAME`, favicon and app icons, `assets/resume/Resume.pdf`, and `flutter_service_worker.js`.
+- `public/` — copied as is: `CNAME`, favicon and app icons, and `flutter_service_worker.js`.
 - `src/pages/manifest.webmanifest.ts` — the PWA manifest, built from `site.ts` and `tools.ts` (live tools become home-screen shortcuts).
 - `src/pwa/` — the service worker. `sw.js` is a template; `integration.mjs` writes `dist/sw.js` after each build with a precache list of every file in `dist` and a content hash as its version, so the whole site works offline after one visit. It only registers in production builds.
 
@@ -43,5 +43,5 @@ There is no test suite. `npm run check && npm run build` is what CI runs on pull
 
 - `public/flutter_service_worker.js` is a self-unregistering kill switch for the old Flutter site's service worker. Keep it at that path so returning visitors' browsers drop the cached old site. `/sw.js` shares its scope, so registering it also replaces the old worker, and its activate step deletes the old caches.
 - App icons (`favicon.svg`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`) are the "e." mark: JetBrains Mono ExtraBold "e" in `#ECEDEF` with the yellow dot, on `#0D0E11`. Keep the maskable one's content inside the central 80% circle.
-- The resume stays at `/assets/resume/Resume.pdf` (old links point there).
+- No resume page or PDF on the site for now.
 - No mention of AI-Tee, and no Projects or Blog pages for now.
