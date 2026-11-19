@@ -55,6 +55,8 @@ export interface TraceInput {
   data: Uint8ClampedArray;
   width: number;
   height: number;
+  /** 1 where the user erased: traced as empty, with no shapes or lines. */
+  mask?: Uint8Array | null;
 }
 
 export interface TraceResult {
@@ -412,13 +414,14 @@ function quantizeInk(px: Uint8ClampedArray, w: number, h: number, maxWidth: numb
  * colour that anti-aliasing leaves along edges, which would otherwise trace as
  * slivers and double lines.
  */
-function dissolveThin(labels: Int16Array, w: number, h: number, nLabels: number) {
+function dissolveThin(labels: Int16Array, w: number, h: number, nLabels: number, keep = -1) {
   const src = labels.slice();
   const counts = new Int32Array(nLabels);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       const own = src[i];
+      if (own === keep) continue;
       let same = 0;
       counts.fill(0);
       for (let dy = -1; dy <= 1; dy++) {
@@ -446,7 +449,7 @@ function dissolveThin(labels: Int16Array, w: number, h: number, nLabels: number)
   }
 }
 
-function despeckle(labels: Int16Array, w: number, h: number, nLabels: number, minArea: number) {
+function despeckle(labels: Int16Array, w: number, h: number, nLabels: number, minArea: number, keep = -1) {
   if (minArea <= 1) return;
   const n = w * h;
   const comp = new Int32Array(n);
@@ -478,7 +481,7 @@ function despeckle(labels: Int16Array, w: number, h: number, nLabels: number, mi
     }
 
     let changed = false;
-    const order = sizes.map((_, i) => i).filter((c) => sizes[c] < minArea);
+    const order = sizes.map((_, i) => i).filter((c) => sizes[c] < minArea && labels[seeds[c]] !== keep);
     order.sort((a, b) => sizes[a] - sizes[b]);
     for (const c of order) {
       const seed = seeds[c];
@@ -944,7 +947,7 @@ function regionPath(chains: Chain[], label: number): string {
 const hex = (r: number, g: number, b: number) => '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
 
 /** The label touching the image border most often: the likely background. */
-function borderLabel(labels: Int16Array, w: number, h: number, nLabels: number): number {
+function borderLabel(labels: Int16Array, w: number, h: number, nLabels: number, ignore = -1): number {
   const counts = new Int32Array(nLabels);
   for (let x = 0; x < w; x++) {
     counts[labels[x]]++;
@@ -954,6 +957,7 @@ function borderLabel(labels: Int16Array, w: number, h: number, nLabels: number):
     counts[labels[y * w]]++;
     counts[labels[y * w + w - 1]]++;
   }
+  if (ignore >= 0) counts[ignore] = -1;
   let best = 0;
   for (let i = 1; i < nLabels; i++) if (counts[i] > counts[best]) best = i;
   return best;
@@ -986,6 +990,7 @@ function familyBorders(palette: number[], clear: number, level: number): (a: num
   const limit = 60 - 0.45 * level; // 60 … 15
   return (a, b) => {
     if (a === b) return false;
+    if (a > clear || b > clear) return false; // erased by hand: no lines there
     if (a === clear || b === clear) return true; // a shape's edge against transparency
     const [l1, a1, b1] = lab[a];
     const [l2, a2, b2] = lab[b];
@@ -999,10 +1004,21 @@ interface Traced {
   area: Float64Array;
 }
 
-function traceLabels(q: Labelled, w: number, h: number, o: TraceOptions, thinClean: boolean): Traced {
-  const nLabels = q.clear + 1;
-  if (thinClean && o.minArea > 1) dissolveThin(q.labels, w, h, nLabels);
-  despeckle(q.labels, w, h, nLabels, o.minArea);
+/**
+ * Cleans up and traces a label image. Labels: palette colours, then
+ * `q.clear` (transparent), then `q.clear + 1` for areas the user erased.
+ * Erased areas become their own label so they're never filled, outlined or
+ * merged away. Ink tracing passes `erasedAs` to turn them into paper instead.
+ */
+function traceLabels(q: Labelled, w: number, h: number, o: TraceOptions, thinClean: boolean, mask?: Uint8Array | null, erasedAs?: number): Traced {
+  const nLabels = q.clear + 2;
+  const erased = q.clear + 1;
+  if (mask) {
+    const to = erasedAs ?? erased;
+    for (let i = 0; i < mask.length; i++) if (mask[i]) q.labels[i] = to;
+  }
+  if (thinClean && o.minArea > 1) dissolveThin(q.labels, w, h, nLabels, erased);
+  despeckle(q.labels, w, h, nLabels, o.minArea, erased);
   const chains = buildChains(q.labels, w, h);
   for (const ch of chains) ch.geo = chainGeometry(ch, o.simplify, o.smooth);
   const area = new Float64Array(nLabels);
@@ -1025,15 +1041,15 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
     progress('Tracing shapes');
     bw = quantizeBW(px, w, h, o.threshold);
     // Black & white keeps one-pixel strokes: there are no in-between colours to clean up.
-    colour = traceLabels(bw, w, h, o, false);
+    colour = traceLabels(bw, w, h, o, false, input.mask);
   }
   if (needColors) {
     progress('Reducing colours');
-    colour = traceLabels(quantizeColors(px, w, h, Math.round(o.colors)), w, h, o, true);
+    colour = traceLabels(quantizeColors(px, w, h, Math.round(o.colors)), w, h, o, true, input.mask);
   }
   if (inkMode) {
     progress('Finding lines');
-    ink = traceLabels(quantizeInk(px, w, h, o.inkWidth, o.inkSensitivity), w, h, o, false);
+    ink = traceLabels(quantizeInk(px, w, h, o.inkWidth, o.inkSensitivity), w, h, o, false, input.mask, 1);
   }
 
   progress('Writing SVG');
@@ -1049,8 +1065,9 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
   const fills = o.mode === 'color' || (o.mode === 'line' && o.lineFill);
   if (fills && colour) {
     const { q, chains, area } = colour;
-    const hasClear = area[q.clear] > 0;
-    const bgLabel = borderLabel(q.labels, w, h, q.clear + 1);
+    // Erased areas must stay see-through, so no background rectangle then either.
+    const hasClear = area[q.clear] > 0 || area[q.clear + 1] > 0;
+    const bgLabel = borderLabel(q.labels, w, h, q.clear + 2, q.clear + 1);
     // Which colour layers to draw, largest first so small details sit on top.
     let skip = -1;
     if (o.background !== 'original') skip = bgLabel;
@@ -1097,6 +1114,7 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
     let d = '';
     for (const ch of colour.chains) {
       if (ch.left === OUTSIDE || ch.right === OUTSIDE) continue; // the image frame, not a line
+      if (ch.left > colour.q.clear || ch.right > colour.q.clear) continue; // erased by hand
       if (ch.closed && ch.pts.length / 2 - 1 < minRing) continue;
       if (differs && !differs(ch.left, ch.right)) continue; // same colour family: only shading
       d += startPoint(ch.geo!, false) + segments(ch.geo!, false) + (ch.closed ? 'Z' : '');
