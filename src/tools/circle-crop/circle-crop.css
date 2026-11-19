@@ -67,6 +67,7 @@
 
 .cc-panel {
   flex: 1 1 300px;
+  min-width: 0; /* long file names truncate instead of widening the panel */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -249,5 +250,12 @@
   }
   .cc-panel {
     padding: 16px;
+  }
+}
+
+/* Fixed panel width on wide screens, so the preview keeps its size. */
+@media (min-width: 1000px) {
+  .cc-panel {
+    flex: 0 0 340px;
   }
 }

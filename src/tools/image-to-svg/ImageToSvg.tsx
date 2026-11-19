@@ -23,6 +23,7 @@ interface Settings {
   simplify: number; // trace px
   smooth: number; // 0–1
   blur: number; // trace px
+  denoise: number; // 0–100, edge-preserving
 }
 
 const DEFAULTS: Settings = {
@@ -40,6 +41,7 @@ const DEFAULTS: Settings = {
   simplify: 1,
   smooth: 0.6,
   blur: 0,
+  denoise: 50,
 };
 
 const MODES: { value: Mode; label: string; hint: string }[] = [
@@ -84,6 +86,7 @@ function toOptions(s: Settings, img: LoadedImage, w: number, h: number): TraceOp
     colors: s.mode === 'line' ? s.lineColors : s.colors,
     threshold: s.autoThreshold ? null : s.threshold,
     blur: s.blur,
+    denoise: s.denoise,
     minArea: minAreaFor(s.cleanup, w, h),
     simplify: s.simplify,
     smooth: s.smooth,
@@ -484,6 +487,19 @@ export default function ImageToSvg() {
           </div>
         )}
 
+        <Slider
+          id="vs-denoise"
+          label="smooth texture"
+          value={settings.denoise}
+          display={settings.denoise === 0 ? 'off' : `${settings.denoise}%`}
+          min={0}
+          max={100}
+          step={5}
+          disabled={disabled}
+          onChange={(v) => set('denoise', v)}
+          help="Flattens grain and shading into clean areas while keeping outlines sharp. Raise it if you see lots of dots."
+        />
+
         <details className="vs-more">
           <summary className="mono">fine-tune</summary>
           <div className="vs-more-body">
@@ -554,7 +570,7 @@ export default function ImageToSvg() {
               step={1}
               disabled={disabled}
               onChange={(v) => set('blur', v)}
-              help="Softens noise in photos before tracing."
+              help="Plain blur. Usually smooth texture works better, since blur also softens outlines."
             />
           </div>
         </details>
