@@ -23,6 +23,8 @@ export interface TraceOptions {
   threshold: number | null;
   /** Blur radius in trace pixels before reducing colours, 0–4. */
   blur: number;
+  /** Edge-preserving texture smoothing before reducing colours, 0–100. */
+  denoise: number;
   /** Shapes smaller than this many trace pixels merge into their neighbours. */
   minArea: number;
   /** How far, in trace pixels, a simplified edge may stray from the pixel edge. */
@@ -92,6 +94,77 @@ function boxBlur(src: Uint8ClampedArray, w: number, h: number, r: number): Uint8
   pass(src, tmp, true);
   pass(tmp, out, false);
   return out;
+}
+
+/**
+ * Edge-preserving smoothing (a bilateral filter). Each pixel becomes a
+ * weighted average of nearby pixels, but neighbours with a very different
+ * colour get almost no weight. Grain and paper texture flatten out while
+ * outlines and colour edges stay sharp, unlike a plain blur.
+ */
+function bilateral(src: Uint8ClampedArray, w: number, h: number, radius: number, sigmaR: number): Uint8ClampedArray {
+  const out = new Uint8ClampedArray(src.length);
+  const sigmaS = Math.max(1, radius / 1.5);
+  const offs: number[] = [];
+  const sw: number[] = [];
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (dx * dx + dy * dy > radius * radius + radius) continue;
+      offs.push(dx, dy);
+      sw.push(Math.exp(-(dx * dx + dy * dy) / (2 * sigmaS * sigmaS)));
+    }
+  }
+  // Range weights by squared colour distance, in steps of 16.
+  const lut = new Float32Array(Math.ceil((3 * 255 * 255) / 16) + 1);
+  for (let i = 0; i < lut.length; i++) lut[i] = Math.exp(-(i * 16) / (2 * sigmaR * sigmaR));
+  const k = sw.length;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const o = (y * w + x) * 4;
+      const r0 = src[o];
+      const g0 = src[o + 1];
+      const b0 = src[o + 2];
+      let sr = 0;
+      let sg = 0;
+      let sb = 0;
+      let sa = 0;
+      let wt = 0;
+      for (let j = 0; j < k; j++) {
+        const xx = x + offs[j * 2];
+        const yy = y + offs[j * 2 + 1];
+        if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+        const q = (yy * w + xx) * 4;
+        const dr = src[q] - r0;
+        const dg = src[q + 1] - g0;
+        const db = src[q + 2] - b0;
+        const wgt = sw[j] * lut[(dr * dr + dg * dg + db * db) >> 4];
+        sr += src[q] * wgt;
+        sg += src[q + 1] * wgt;
+        sb += src[q + 2] * wgt;
+        sa += src[q + 3] * wgt;
+        wt += wgt;
+      }
+      out[o] = sr / wt;
+      out[o + 1] = sg / wt;
+      out[o + 2] = sb / wt;
+      out[o + 3] = sa / wt;
+    }
+  }
+  return out;
+}
+
+/** Texture smoothing level 0–100 → repeated bilateral passes, scaled to the trace size. */
+function smoothTexture(src: Uint8ClampedArray, w: number, h: number, level: number): Uint8ClampedArray {
+  if (level <= 0) return src;
+  const t = level / 100;
+  // A fixed small radius keeps the cost in check at high detail; extra passes
+  // reach further instead.
+  const radius = 2 + Math.round(2 * t);
+  const sigmaR = 12 + 28 * t; // how different a colour may be and still blend
+  const passes = 1 + Math.round(3 * t);
+  let px = src;
+  for (let i = 0; i < passes; i++) px = bilateral(px, w, h, radius, sigmaR);
+  return px;
 }
 
 /** Small deterministic PRNG so the same settings always give the same SVG. */
@@ -834,7 +907,7 @@ function borderLabel(labels: Int16Array, w: number, h: number, nLabels: number):
 export function trace(input: TraceInput, o: TraceOptions, progress: Progress = () => {}): TraceResult & { threshold?: number } {
   const { width: w, height: h } = input;
   progress('Reducing colours');
-  const px = boxBlur(input.data, w, h, Math.round(o.blur));
+  const px = boxBlur(smoothTexture(input.data, w, h, o.denoise), w, h, Math.round(o.blur));
   const bw = o.mode === 'bw' ? quantizeBW(px, w, h, o.threshold) : null;
   const q: Labelled = bw ?? quantizeColors(px, w, h, Math.round(o.colors));
   const nLabels = q.clear + 1;
@@ -899,9 +972,13 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
   }
 
   if (o.mode === 'line') {
+    // Drop small closed rings (dots and blobs from texture). Open lines are
+    // kept whatever their length, so outlines don't get gaps at junctions.
+    const minRing = o.minArea > 1 ? Math.sqrt(o.minArea) * 6 : 0;
     let d = '';
     for (const ch of chains) {
       if (ch.left === OUTSIDE || ch.right === OUTSIDE) continue; // the image frame, not a line
+      if (ch.closed && ch.pts.length / 2 - 1 < minRing) continue;
       d += startPoint(ch.geo!, false) + segments(ch.geo!, false) + (ch.closed ? 'Z' : '');
       shapes++;
     }
