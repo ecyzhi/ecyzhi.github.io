@@ -6,6 +6,7 @@ export interface TraceRequest {
   width: number;
   height: number;
   data: Uint8ClampedArray;
+  mask?: Uint8Array | null;
   options: TraceOptions;
 }
 
@@ -17,10 +18,10 @@ export type TraceResponse =
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
 ctx.onmessage = (e: MessageEvent<TraceRequest>) => {
-  const { id, width, height, data, options } = e.data;
+  const { id, width, height, data, mask, options } = e.data;
   const t0 = performance.now();
   try {
-    const res = trace({ data, width, height }, options, (stage) => ctx.postMessage({ id, type: 'progress', stage } satisfies TraceResponse));
+    const res = trace({ data, width, height, mask }, options, (stage) => ctx.postMessage({ id, type: 'progress', stage } satisfies TraceResponse));
     ctx.postMessage({ id, type: 'done', ...res, ms: Math.round(performance.now() - t0) } satisfies TraceResponse);
   } catch (err) {
     ctx.postMessage({ id, type: 'error', message: err instanceof Error ? err.message : String(err) } satisfies TraceResponse);
