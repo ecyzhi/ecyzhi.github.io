@@ -18,6 +18,10 @@ interface Settings {
   ink: string;
   lineWidth: number;
   lineFill: boolean;
+  lineSource: 'ink' | 'borders';
+  inkSensitivity: number; // 0–100
+  inkWidth: number; // px per 1000 px of the long side
+  hueBorders: number; // 0–100, 0 = off
   resolution: number;
   cleanup: number; // 0–100
   simplify: number; // trace px
@@ -34,8 +38,12 @@ const DEFAULTS: Settings = {
   threshold: 128,
   background: { color: 'original', bw: 'white', line: 'white' },
   ink: '#000000',
-  lineWidth: 1.5,
+  lineWidth: 2,
   lineFill: false,
+  lineSource: 'ink',
+  inkSensitivity: 50,
+  inkWidth: 6,
+  hueBorders: 60,
   resolution: 1000,
   cleanup: 25,
   simplify: 1,
@@ -47,7 +55,7 @@ const DEFAULTS: Settings = {
 const MODES: { value: Mode; label: string; hint: string }[] = [
   { value: 'color', label: 'Colour', hint: 'Flat colour shapes, like a poster or illustration.' },
   { value: 'bw', label: 'B & W', hint: 'One colour on a background. Good for logos, signatures and scans.' },
-  { value: 'line', label: 'Line art', hint: 'Outlines traced along colour changes and borders.' },
+  { value: 'line', label: 'Line art', hint: 'Outlines, like a colouring page.' },
 ];
 
 const BACKGROUNDS: { value: Background; label: string }[] = [
@@ -93,6 +101,10 @@ function toOptions(s: Settings, img: LoadedImage, w: number, h: number): TraceOp
     // Width is per 1000 px of the long side, so changing detail keeps the look.
     lineWidth: (s.lineWidth * Math.max(w, h)) / 1000,
     lineFill: s.lineFill,
+    lineSource: s.lineSource,
+    inkSensitivity: s.inkSensitivity,
+    inkWidth: (s.inkWidth * Math.max(w, h)) / 1000,
+    hueBorders: s.hueBorders,
     // "Keep" only makes sense when colours are drawn.
     background: bg === 'original' && s.mode !== 'color' && !(s.mode === 'line' && s.lineFill) ? 'transparent' : bg,
     ink: s.ink,
@@ -377,18 +389,17 @@ export default function ImageToSvg() {
           <p className="vs-help">{MODES.find((m) => m.value === mode)!.hint}</p>
         </fieldset>
 
-        {mode !== 'bw' && (
+        {mode === 'color' && (
           <Slider
             id="vs-colors"
-            label={mode === 'line' ? 'colour steps' : 'colours'}
-            value={mode === 'line' ? settings.lineColors : settings.colors}
-            display={String(mode === 'line' ? settings.lineColors : settings.colors)}
+            label="colours"
+            value={settings.colors}
+            display={String(settings.colors)}
             min={2}
-            max={mode === 'line' ? 16 : 32}
+            max={32}
             step={1}
             disabled={disabled}
-            onChange={(v) => set(mode === 'line' ? 'lineColors' : 'colors', v)}
-            help={mode === 'line' ? 'More steps trace more colour changes, so you get more lines.' : undefined}
+            onChange={(v) => set('colors', v)}
           />
         )}
 
@@ -427,17 +438,93 @@ export default function ImageToSvg() {
 
         {mode === 'line' && (
           <>
-            <Slider
-              id="vs-width"
-              label="line width"
-              value={settings.lineWidth}
-              display={settings.lineWidth.toFixed(1)}
-              min={0.5}
-              max={8}
-              step={0.5}
-              disabled={disabled}
-              onChange={(v) => set('lineWidth', v)}
-            />
+            <fieldset className="vs-field" disabled={disabled}>
+              <legend className="vs-label mono">find lines from</legend>
+              <div className="vs-seg">
+                <button type="button" aria-pressed={settings.lineSource === 'ink'} onClick={() => set('lineSource', 'ink')}>
+                  Ink + colour
+                </button>
+                <button type="button" aria-pressed={settings.lineSource === 'borders'} onClick={() => set('lineSource', 'borders')}>
+                  Every border
+                </button>
+              </div>
+              <p className="vs-help">
+                {settings.lineSource === 'ink'
+                  ? 'Keeps the drawn outlines, and adds lines where one colour meets a different one, such as hair against skin. Light and shadow are ignored.'
+                  : 'Draws a line wherever the colour changes, shading and highlights included.'}
+              </p>
+            </fieldset>
+
+            {settings.lineSource === 'ink' && (
+              <>
+                <Slider
+                  id="vs-ink-sens"
+                  label="ink lines"
+                  value={settings.inkSensitivity}
+                  display={`${settings.inkSensitivity}%`}
+                  min={0}
+                  max={100}
+                  step={5}
+                  disabled={disabled}
+                  onChange={(v) => set('inkSensitivity', v)}
+                  help="Higher picks up fainter strokes."
+                />
+                <Slider
+                  id="vs-ink-width"
+                  label="thickest ink line"
+                  value={settings.inkWidth}
+                  display={`${settings.inkWidth} px`}
+                  min={2}
+                  max={16}
+                  step={1}
+                  disabled={disabled}
+                  onChange={(v) => set('inkWidth', v)}
+                  help="Dark areas wider than this count as fill, not line."
+                />
+                <Slider
+                  id="vs-hue"
+                  label="colour edges"
+                  value={settings.hueBorders}
+                  display={settings.hueBorders === 0 ? 'off' : `${settings.hueBorders}%`}
+                  min={0}
+                  max={100}
+                  step={5}
+                  disabled={disabled}
+                  onChange={(v) => set('hueBorders', v)}
+                  help="Higher adds lines between more similar colours."
+                />
+              </>
+            )}
+
+            {(settings.lineSource === 'borders' || settings.hueBorders > 0 || settings.lineFill) && (
+              <Slider
+                id="vs-colors"
+                label="colour steps"
+                value={settings.lineColors}
+                display={String(settings.lineColors)}
+                min={2}
+                max={16}
+                step={1}
+                disabled={disabled}
+                onChange={(v) => set('lineColors', v)}
+                help="More steps find more colour areas, so you get more lines."
+              />
+            )}
+
+            {(settings.lineSource === 'borders' || settings.hueBorders > 0) && (
+              <Slider
+                id="vs-width"
+                label={settings.lineSource === 'ink' ? 'colour edge width' : 'line width'}
+                value={settings.lineWidth}
+                display={settings.lineWidth.toFixed(1)}
+                min={0.5}
+                max={8}
+                step={0.5}
+                disabled={disabled}
+                onChange={(v) => set('lineWidth', v)}
+              />
+            )}
+
             <label className="vs-check">
               <input
                 type="checkbox"

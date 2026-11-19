@@ -33,6 +33,14 @@ export interface TraceOptions {
   smooth: number;
   /** Line mode stroke width in trace pixels. */
   lineWidth: number;
+  /** Line mode: trace dark ink strokes, or the borders between colour areas. */
+  lineSource: 'ink' | 'borders';
+  /** Ink lines: how much darker than its surroundings a stroke must be, 0–100. */
+  inkSensitivity: number;
+  /** Ink lines: widest stroke picked up, in trace pixels. */
+  inkWidth: number;
+  /** Ink lines: also draw borders between different colour families, 0 (off) – 100 (most). */
+  hueBorders: number;
   /** Line mode: keep the colour fills under the lines. */
   lineFill: boolean;
   background: Background;
@@ -346,6 +354,53 @@ function quantizeBW(px: Uint8ClampedArray, w: number, h: number, threshold: numb
   const labels = new Int16Array(n);
   for (let i = 0; i < n; i++) labels[i] = px[i * 4 + 3] < 128 ? 2 : lum[i] < t ? 0 : 1;
   return { labels, palette: [0, 0, 0, 255, 255, 255], clear: 2, threshold: Math.round(t) };
+}
+
+/** Max (grow = true) or min filter over a square of side 2r + 1, done as two 1-D passes. */
+function rankFilter(src: Uint8Array, w: number, h: number, r: number, grow: boolean): Uint8Array {
+  const tmp = new Uint8Array(src.length);
+  const out = new Uint8Array(src.length);
+  const pick = grow ? Math.max : Math.min;
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    for (let x = 0; x < w; x++) {
+      let v = src[row + x];
+      for (let k = Math.max(0, x - r); k <= Math.min(w - 1, x + r); k++) v = pick(v, src[row + k]);
+      tmp[row + x] = v;
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      let v = tmp[y * w + x];
+      for (let k = Math.max(0, y - r); k <= Math.min(h - 1, y + r); k++) v = pick(v, tmp[k * w + x]);
+      out[y * w + x] = v;
+    }
+  }
+  return out;
+}
+
+/**
+ * Ink lines: label 0 = stroke, 1 = paper, 2 = transparent. A morphological
+ * closing paints over dark features narrower than the window; the difference
+ * from the original (a "black top-hat") is large only on thin dark strokes.
+ * Wide dark areas, soft shading and the rims of highlights stay untouched,
+ * so lighting doesn't turn into outlines.
+ */
+function quantizeInk(px: Uint8ClampedArray, w: number, h: number, maxWidth: number, sensitivity: number): Labelled {
+  const n = w * h;
+  const lum = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    // Transparent pixels count as white paper.
+    const a = px[o + 3] / 255;
+    lum[i] = Math.round((0.299 * px[o] + 0.587 * px[o + 1] + 0.114 * px[o + 2]) * a + 255 * (1 - a));
+  }
+  const r = Math.max(1, Math.round(maxWidth / 2));
+  const closed = rankFilter(rankFilter(lum, w, h, r, true), w, h, r, false);
+  const thr = 64 - 0.5 * sensitivity; // 64 … 14 levels darker than the surroundings
+  const labels = new Int16Array(n);
+  for (let i = 0; i < n; i++) labels[i] = px[i * 4 + 3] < 128 ? 2 : closed[i] - lum[i] > thr ? 0 : 1;
+  return { labels, palette: [0, 0, 0, 255, 255, 255], clear: 2 };
 }
 
 // ---------------------------------------------------------------------------
@@ -904,29 +959,84 @@ function borderLabel(labels: Int16Array, w: number, h: number, nLabels: number):
   return best;
 }
 
-export function trace(input: TraceInput, o: TraceOptions, progress: Progress = () => {}): TraceResult & { threshold?: number } {
-  const { width: w, height: h } = input;
-  progress('Reducing colours');
-  const px = boxBlur(smoothTexture(input.data, w, h, o.denoise), w, h, Math.round(o.blur));
-  const bw = o.mode === 'bw' ? quantizeBW(px, w, h, o.threshold) : null;
-  const q: Labelled = bw ?? quantizeColors(px, w, h, Math.round(o.colors));
+function toLab(r: number, g: number, b: number): [number, number, number] {
+  const lin = (v: number) => {
+    v /= 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const R = lin(r);
+  const G = lin(g);
+  const B = lin(b);
+  const f = (t: number) => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116);
+  const x = f((0.4124 * R + 0.3576 * G + 0.1805 * B) / 0.95047);
+  const y = f(0.2126 * R + 0.7152 * G + 0.0722 * B);
+  const z = f((0.0193 * R + 0.1192 * G + 0.9505 * B) / 1.08883);
+  return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+}
+
+/**
+ * Which pairs of palette colours belong to different colour families. Hue
+ * and saturation count fully, lightness only a little, so light and shadow
+ * on one material (skin, a red jacket) stay one family while hair against
+ * skin does not.
+ */
+function familyBorders(palette: number[], clear: number, level: number): (a: number, b: number) => boolean {
+  const lab: [number, number, number][] = [];
+  for (let i = 0; i < clear; i++) lab.push(toLab(palette[i * 3], palette[i * 3 + 1], palette[i * 3 + 2]));
+  const limit = 60 - 0.45 * level; // 60 … 15
+  return (a, b) => {
+    if (a === b) return false;
+    if (a === clear || b === clear) return true; // a shape's edge against transparency
+    const [l1, a1, b1] = lab[a];
+    const [l2, a2, b2] = lab[b];
+    return Math.hypot(a1 - a2, b1 - b2, 0.3 * (l1 - l2)) > limit;
+  };
+}
+
+interface Traced {
+  q: Labelled;
+  chains: Chain[];
+  area: Float64Array;
+}
+
+function traceLabels(q: Labelled, w: number, h: number, o: TraceOptions, thinClean: boolean): Traced {
   const nLabels = q.clear + 1;
-
-  progress('Cleaning up');
-  // Black & white keeps one-pixel strokes: there are no in-between colours to clean up.
-  if (o.mode !== 'bw' && o.minArea > 1) dissolveThin(q.labels, w, h, nLabels);
+  if (thinClean && o.minArea > 1) dissolveThin(q.labels, w, h, nLabels);
   despeckle(q.labels, w, h, nLabels, o.minArea);
-
-  progress('Tracing shapes');
   const chains = buildChains(q.labels, w, h);
   for (const ch of chains) ch.geo = chainGeometry(ch, o.simplify, o.smooth);
-
-  progress('Writing SVG');
   const area = new Float64Array(nLabels);
   for (let i = 0; i < w * h; i++) area[q.labels[i]]++;
-  const hasClear = area[q.clear] > 0;
-  const bgLabel = borderLabel(q.labels, w, h, nLabels);
+  return { q, chains, area };
+}
 
+export function trace(input: TraceInput, o: TraceOptions, progress: Progress = () => {}): TraceResult & { threshold?: number } {
+  const { width: w, height: h } = input;
+  const inkMode = o.mode === 'line' && o.lineSource === 'ink';
+  const needColors = o.mode === 'color' || (o.mode === 'line' && (o.lineSource === 'borders' || o.lineFill || o.hueBorders > 0));
+
+  progress('Smoothing');
+  const px = boxBlur(smoothTexture(input.data, w, h, o.denoise), w, h, Math.round(o.blur));
+
+  let bw: (Labelled & { threshold: number }) | null = null;
+  let colour: Traced | null = null;
+  let ink: Traced | null = null;
+  if (o.mode === 'bw') {
+    progress('Tracing shapes');
+    bw = quantizeBW(px, w, h, o.threshold);
+    // Black & white keeps one-pixel strokes: there are no in-between colours to clean up.
+    colour = traceLabels(bw, w, h, o, false);
+  }
+  if (needColors) {
+    progress('Reducing colours');
+    colour = traceLabels(quantizeColors(px, w, h, Math.round(o.colors)), w, h, o, true);
+  }
+  if (inkMode) {
+    progress('Finding lines');
+    ink = traceLabels(quantizeInk(px, w, h, o.inkWidth, o.inkSensitivity), w, h, o, false);
+  }
+
+  progress('Writing SVG');
   const parts: string[] = [];
   const used = new Set<string>();
   let shapes = 0;
@@ -937,7 +1047,10 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
   }
 
   const fills = o.mode === 'color' || (o.mode === 'line' && o.lineFill);
-  if (fills) {
+  if (fills && colour) {
+    const { q, chains, area } = colour;
+    const hasClear = area[q.clear] > 0;
+    const bgLabel = borderLabel(q.labels, w, h, q.clear + 1);
     // Which colour layers to draw, largest first so small details sit on top.
     let skip = -1;
     if (o.background !== 'original') skip = bgLabel;
@@ -962,23 +1075,30 @@ export function trace(input: TraceInput, o: TraceOptions, progress: Progress = (
       shapes++;
     }
     if (layers.length) parts.push(`<g fill-rule="evenodd" stroke-width="0.6" stroke-linejoin="round">${layers.join('')}</g>`);
-  } else if (o.mode === 'bw') {
-    const d = regionPath(chains, 0);
+  }
+
+  // Filled ink shapes: black & white mode, and ink lines (which keep the
+  // artist's own varying stroke width).
+  const inkShapes = o.mode === 'bw' ? colour : ink;
+  if (inkShapes) {
+    const d = regionPath(inkShapes.chains, 0);
     if (d) {
       parts.push(`<path fill="${o.ink}" fill-rule="evenodd" stroke="${o.ink}" stroke-width="0.6" stroke-linejoin="round" d="${d}"/>`);
       used.add(o.ink);
-      shapes = 1;
+      shapes += o.mode === 'bw' ? 1 : inkShapes.chains.length;
     }
   }
 
-  if (o.mode === 'line') {
+  if (o.mode === 'line' && colour && (o.lineSource === 'borders' || o.hueBorders > 0)) {
+    const differs = o.lineSource === 'ink' ? familyBorders(colour.q.palette, colour.q.clear, o.hueBorders) : null;
     // Drop small closed rings (dots and blobs from texture). Open lines are
     // kept whatever their length, so outlines don't get gaps at junctions.
     const minRing = o.minArea > 1 ? Math.sqrt(o.minArea) * 6 : 0;
     let d = '';
-    for (const ch of chains) {
+    for (const ch of colour.chains) {
       if (ch.left === OUTSIDE || ch.right === OUTSIDE) continue; // the image frame, not a line
       if (ch.closed && ch.pts.length / 2 - 1 < minRing) continue;
+      if (differs && !differs(ch.left, ch.right)) continue; // same colour family: only shading
       d += startPoint(ch.geo!, false) + segments(ch.geo!, false) + (ch.closed ? 'Z' : '');
       shapes++;
     }
