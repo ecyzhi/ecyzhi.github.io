@@ -501,3 +501,77 @@
   height: 28px;
   margin: 0;
 }
+
+/* Lasso outline while drawing */
+.vs-lasso {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  max-width: none;
+}
+.vs-lasso polygon {
+  fill: rgba(255, 64, 129, 0.18);
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
+}
+
+/* Holding Space pans */
+.vs-viewer.is-pan,
+.vs-viewer.is-pan:active {
+  cursor: grab;
+}
+
+/* Five edit tools: icon and label, stacked on narrow screens */
+.vs-tools {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  flex-basis: 100%;
+}
+.vs-tools button {
+  padding: 0 2px;
+  min-width: 0;
+}
+@media (max-width: 520px) {
+  .vs-tools button {
+    flex-direction: column;
+    gap: 2px;
+    height: 52px;
+    font-size: 11px;
+  }
+}
+.vs-check-sm {
+  min-height: 36px;
+  font-size: 13px;
+  flex: 1 1 220px;
+}
+
+/* Full screen (real, or a fixed overlay where the API is missing) */
+.vs-status {
+  margin-left: auto;
+}
+.vs-stage-card.is-full,
+.vs-stage-card:fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  border-radius: 0;
+  border: 0;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background: var(--surface);
+  overflow-y: auto;
+}
+.vs-stage-card.is-full .vs-viewer-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.vs-stage-card.is-full .vs-viewer {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+  min-height: 200px;
+}
+html.vs-noscroll,
+html.vs-noscroll body {
+  overflow: hidden;
+}

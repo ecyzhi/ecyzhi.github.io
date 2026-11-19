@@ -3,7 +3,7 @@ import DropZone from '../shared/DropZone';
 import { baseName, downloadBlob, formatBytes, loadImageFile, type LoadedImage } from '../shared/image';
 import type { Background, Mode, TraceOptions } from './trace';
 import type { TraceRequest, TraceResponse } from './trace.worker';
-import { EditLayer, type BrushTool } from './edits';
+import { EditLayer, type EditTool } from './edits';
 import '../shared/tool.css';
 import './image-to-svg.css';
 
@@ -72,6 +72,22 @@ const RESOLUTIONS = [
   { value: 1600, label: 'High' },
   { value: 2400, label: 'Very high · slow on phones' },
 ];
+
+const TOOLS: { value: EditTool; label: string; title: string; icon: string }[] = [
+  { value: 'move', label: 'Move', title: 'Move and zoom', icon: 'M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3' },
+  { value: 'smudge', label: 'Smudge', title: 'Smudge: push colour over spots and noise', icon: 'M9 11V5a2 2 0 0 1 4 0v5M13 10V4a2 2 0 0 1 4 0v8M9 9a2 2 0 0 0-4 0v5a7 7 0 0 0 14 0v-2' },
+  { value: 'erase', label: 'Eraser', title: 'Eraser: remove parts from the SVG', icon: 'M20 20H9L4 15a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-9 9M8 11l6 6' },
+  { value: 'lasso', label: 'Lasso', title: 'Lasso: draw around an area to remove it', icon: 'M7 22a5 5 0 0 1-2-4M3.3 14A6.8 6.8 0 0 1 2 10c0-4.4 4.5-8 10-8s10 3.6 10 8-4.5 8-10 8a12 12 0 0 1-5-1M5 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z' },
+  { value: 'wand', label: 'Select', title: 'Smart select: tap an area of similar colour to remove it', icon: 'M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M17.8 6.2L19 5M3 21l9-9M12.2 6.2L11 5' },
+];
+
+const HINTS: Record<EditTool, string> = {
+  move: 'pinch or scroll to zoom · drag to move',
+  smudge: 'drag to push colour over spots · hold space or use two fingers to move',
+  erase: 'drag over parts to remove them · hold space or use two fingers to move',
+  lasso: 'draw around an area to remove it · hold space or use two fingers to move',
+  wand: 'tap an area of similar colour to remove it · hold space or use two fingers to move',
+};
 
 const MIN_ZOOM = 1;
 /** Hand edits are kept at up to this many pixels on the long side. */
@@ -184,7 +200,12 @@ export default function ImageToSvg() {
   const [copied, setCopied] = useState(false);
   const [shareable, setShareable] = useState(false);
 
-  const [tool, setTool] = useState<'move' | BrushTool>('move');
+  const [tool, setTool] = useState<EditTool>('move');
+  const [invert, setInvert] = useState(false); // lasso and smart select: erase outside instead
+  const [tolerance, setTolerance] = useState(25); // smart select colour range, 0–100
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const [full, setFull] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [brushSize, setBrushSize] = useState(28); // screen px
   const [strength, setStrength] = useState(0.6);
   const [editVersion, setEditVersion] = useState(0);
@@ -309,6 +330,75 @@ export default function ImageToSvg() {
     onEdited();
   };
 
+  // Hold Space to pan with any edit tool, like in drawing apps.
+  useEffect(() => {
+    const typing = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return el.isContentEditable || tag === 'TEXTAREA' || tag === 'SELECT' || (tag === 'INPUT' && !['range', 'checkbox', 'color'].includes((el as HTMLInputElement).type));
+    };
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || typing(e.target) || !img) return;
+      e.preventDefault(); // no page scroll, no button press
+      if (!e.repeat) setSpaceHeld(true);
+    };
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space') setSpaceHeld(false);
+    };
+    const blur = () => setSpaceHeld(false);
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', blur);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+      window.removeEventListener('blur', blur);
+    };
+  }, [img]);
+
+  // Full screen: the real Fullscreen API where there is one (desktop,
+  // Android, iPad), and a fixed overlay elsewhere (iPhone Safari).
+  const toggleFull = async () => {
+    const el = cardRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
+    const doc = document as Document & { webkitExitFullscreen?: () => Promise<void>; webkitFullscreenElement?: Element };
+    const current = document.fullscreenElement ?? doc.webkitFullscreenElement;
+    if (full) {
+      if (current) await (document.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
+      setFull(false);
+      return;
+    }
+    setFull(true);
+    try {
+      if (el?.requestFullscreen) await el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    } catch {
+      /* the overlay still works */
+    }
+  };
+  useEffect(() => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    const onChange = () => {
+      if (!(document.fullscreenElement ?? doc.webkitFullscreenElement)) setFull(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFull(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+  useEffect(() => {
+    // Stop the page behind the overlay from scrolling.
+    document.documentElement.classList.toggle('vs-noscroll', full);
+    return () => document.documentElement.classList.remove('vs-noscroll');
+  }, [full]);
+
   // Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z (or Ctrl+Y) for undo and redo.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -382,7 +472,7 @@ export default function ImageToSvg() {
 
   return (
     <div className="vs">
-      <div className="vs-stage-card">
+      <div ref={cardRef} className={`vs-stage-card${full ? ' is-full' : ''}`}>
         {img ? (
           <>
             <div className="vs-toolbar">
@@ -404,13 +494,29 @@ export default function ImageToSvg() {
                   `traced in ${result.ms < 1000 ? `${result.ms} ms` : `${(result.ms / 1000).toFixed(1)} s`}`
                 ) : null}
               </span>
+              <button
+                type="button"
+                className="vs-icon-btn vs-full-btn"
+                aria-label={full ? 'Exit full screen' : 'Full screen'}
+                title={full ? 'Exit full screen (Esc)' : 'Full screen'}
+                onClick={toggleFull}
+              >
+                {full ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+                )}
+              </button>
             </div>
             <Viewer
               key={img.url}
               src={show === 'svg' ? result?.url ?? null : null}
               edits={edits.current}
               showEdits={show === 'original'}
-              tool={tool}
+              tool={spaceHeld ? 'move' : tool}
+              panOnly={spaceHeld}
+              tolerance={tolerance}
+              invert={invert}
               brushSize={brushSize}
               strength={strength}
               onEdited={onEdited}
@@ -419,19 +525,15 @@ export default function ImageToSvg() {
               label={show === 'svg' ? 'Traced SVG preview' : 'Original image with your edits'}
             />
             <div className="vs-edit" role="group" aria-label="Edit tools">
-              <div className="vs-seg vs-seg-3 vs-tools">
-                <button type="button" aria-pressed={tool === 'move'} onClick={() => setTool('move')} title="Move and zoom">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" /></svg>
-                  Move
-                </button>
-                <button type="button" aria-pressed={tool === 'smudge'} onClick={() => setTool('smudge')} title="Smudge: push colour over spots and noise">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 11V5a2 2 0 0 1 4 0v5M13 10V4a2 2 0 0 1 4 0v8M9 9a2 2 0 0 0-4 0v5a7 7 0 0 0 14 0v-2" /></svg>
-                  Smudge
-                </button>
-                <button type="button" aria-pressed={tool === 'erase'} onClick={() => setTool('erase')} title="Eraser: remove parts from the SVG">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 20H9L4 15a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-9 9M8 11l6 6" /></svg>
-                  Eraser
-                </button>
+              <div className="vs-seg vs-tools">
+                {TOOLS.map((t) => (
+                  <button key={t.value} type="button" aria-pressed={tool === t.value} onClick={() => setTool(t.value)} title={t.title}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d={t.icon} />
+                    </svg>
+                    <span>{t.label}</span>
+                  </button>
+                ))}
               </div>
               <div className="vs-history">
                 <button type="button" className="vs-icon-btn" aria-label="Undo" title="Undo" disabled={!edits.current?.canUndo} onClick={undo}>
@@ -444,7 +546,21 @@ export default function ImageToSvg() {
                   Clear edits
                 </button>
               </div>
-              {tool !== 'move' && (
+              {(tool === 'lasso' || tool === 'wand') && (
+                <div className="vs-brush">
+                  {tool === 'wand' && (
+                    <label className="vs-mini">
+                      <span className="mono">range</span>
+                      <input type="range" min={2} max={80} step={1} value={tolerance} onChange={(e) => setTolerance(Number(e.target.value))} />
+                    </label>
+                  )}
+                  <label className="vs-check vs-check-sm">
+                    <input type="checkbox" checked={invert} onChange={(e) => setInvert(e.target.checked)} />
+                    <span>Invert: erase everything outside</span>
+                  </label>
+                </div>
+              )}
+              {(tool === 'smudge' || tool === 'erase') && (
                 <div className="vs-brush">
                   <label className="vs-mini">
                     <span className="mono">size</span>
@@ -464,11 +580,7 @@ export default function ImageToSvg() {
                 {img.name} · {img.width} × {img.height}
               </span>
               <span className="vs-hint">
-                {tool === 'move'
-                  ? 'pinch or scroll to zoom · drag to move'
-                  : tool === 'smudge'
-                    ? 'drag to push colour over spots · two fingers to zoom'
-                    : 'drag over parts to remove them · two fingers to zoom'}
+                {HINTS[tool]}
               </span>
             </div>
           </>
@@ -884,7 +996,11 @@ interface ViewerProps {
   edits: EditLayer | null;
   /** Show the edited source instead of the SVG. */
   showEdits: boolean;
-  tool: 'move' | BrushTool;
+  tool: EditTool;
+  /** Space is held: drag pans whatever the tool. */
+  panOnly: boolean;
+  tolerance: number;
+  invert: boolean;
   brushSize: number;
   strength: number;
   onEdited: () => void;
@@ -906,7 +1022,7 @@ interface View {
  * While a brush stroke is in progress the edited source shows, so you see
  * what you paint, then the new trace replaces it.
  */
-function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, aspect, className, label }: ViewerProps) {
+function Viewer({ src, edits, showEdits, tool, panOnly, tolerance, invert, brushSize, strength, onEdited, aspect, className, label }: ViewerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -914,6 +1030,7 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
   const [committed, setCommitted] = useState(1);
   const [stroking, setStroking] = useState(false);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const [lassoPts, setLassoPts] = useState<{ x: number; y: number }[] | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -981,8 +1098,8 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
   // ----- brush strokes -----
 
   // Latest values for the native touch listeners.
-  const live = useRef({ panBy, zoomAt, view, fit, edits, tool, brushSize, strength, onEdited });
-  live.current = { panBy, zoomAt, view, fit, edits, tool, brushSize, strength, onEdited };
+  const live = useRef({ panBy, zoomAt, view, fit, edits, tool, brushSize, strength, onEdited, tolerance, invert });
+  live.current = { panBy, zoomAt, view, fit, edits, tool, brushSize, strength, onEdited, tolerance, invert };
 
   /** Stage point (from the centre) → edit layer pixels, and the brush radius there. */
   const toLayer = (p: { x: number; y: number }) => {
@@ -995,7 +1112,7 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
   const strokeStart = (p: { x: number; y: number }) => {
     const { edits: ed, tool: t, strength: st } = live.current;
     const q = toLayer(p);
-    if (!ed || t === 'move' || !q) return false;
+    if (!ed || (t !== 'smudge' && t !== 'erase') || !q) return false;
     ed.begin(t, q.x, q.y, q.r, st);
     setStroking(true);
     return true;
@@ -1012,11 +1129,49 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
     setStroking(false);
   };
 
+  // Lasso and smart select. Points are kept in stage coordinates for the
+  // on-screen outline and converted to layer pixels when the selection ends.
+  const sel = useRef<{ start: { x: number; y: number }; pts: { x: number; y: number }[]; moved: number } | null>(null);
+  const selStart = (p: { x: number; y: number }) => {
+    const t = live.current.tool;
+    if (!live.current.edits || (t !== 'lasso' && t !== 'wand')) return false;
+    sel.current = { start: p, pts: [p], moved: 0 };
+    if (t === 'lasso') setLassoPts([p]);
+    return true;
+  };
+  const selMove = (p: { x: number; y: number }) => {
+    const cur = sel.current;
+    if (!cur) return;
+    cur.moved = Math.max(cur.moved, Math.hypot(p.x - cur.start.x, p.y - cur.start.y));
+    if (live.current.tool !== 'lasso') return;
+    const lastPt = cur.pts[cur.pts.length - 1];
+    if (Math.hypot(p.x - lastPt.x, p.y - lastPt.y) < 3) return;
+    cur.pts.push(p);
+    setLassoPts(cur.pts.slice());
+  };
+  const selEnd = (cancel = false) => {
+    const cur = sel.current;
+    sel.current = null;
+    setLassoPts(null);
+    const { edits: ed, tool: t, tolerance: tol, invert: inv, onEdited: done } = live.current;
+    if (!cur || !ed || cancel) return;
+    let changed = false;
+    if (t === 'lasso') {
+      const pts = cur.pts.map(toLayer).filter((q): q is { x: number; y: number; r: number } => !!q);
+      changed = ed.lasso(pts, inv);
+    } else if (t === 'wand' && cur.moved < 10) {
+      const q = toLayer(cur.start);
+      if (q) changed = ed.wand(q.x, q.y, tol, inv);
+    }
+    if (changed) done();
+  };
+
   // Mouse and pen: drag to pan, or to paint with a brush. Touch is handled by
   // the native listeners below, because iOS Safari doesn't reliably honour
   // touch-action and cancels pointers.
   const last = useRef<{ x: number; y: number } | null>(null);
   const painting = useRef(false);
+  const selecting = useRef(false);
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === 'touch') return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -1026,20 +1181,24 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
       /* optional */
     }
     const p = local(e);
-    painting.current = tool !== 'move' && strokeStart(p);
+    painting.current = strokeStart(p);
+    selecting.current = !painting.current && selStart(p);
     last.current = p;
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const cur = local(e);
-    if (e.pointerType !== 'touch' && tool !== 'move') setCursor(cur);
+    if (e.pointerType !== 'touch' && (tool === 'smudge' || tool === 'erase')) setCursor(cur);
     if (!last.current) return;
     if (painting.current) strokeMove(cur);
+    else if (selecting.current) selMove(cur);
     else panBy(cur.x - last.current.x, cur.y - last.current.y);
     last.current = cur;
   };
-  const onPointerUp = () => {
+  const onPointerUp = (e: React.PointerEvent) => {
     if (painting.current) strokeEnd();
+    if (selecting.current) selEnd(e.type === 'pointercancel');
     painting.current = false;
+    selecting.current = false;
     last.current = null;
   };
 
@@ -1052,6 +1211,7 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
     let prev: { x: number; y: number }[] = [];
     let owned = false; // whether this touch sequence belongs to the preview
     let brushing = false;
+    let selectingTouch = false;
     let pinched = false;
     const points = (e: TouchEvent) => {
       const r = el.getBoundingClientRect();
@@ -1066,10 +1226,13 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
       prev = points(e);
       if (e.touches.length >= 2) {
         if (brushing) strokeEnd(true);
+        if (selectingTouch) selEnd(true);
         brushing = false;
+        selectingTouch = false;
         pinched = true;
       } else if (t !== 'move' && !pinched && prev.length === 1) {
         brushing = strokeStart(prev[0]);
+        selectingTouch = !brushing && selStart(prev[0]);
       }
     };
     const onMove = (e: TouchEvent) => {
@@ -1079,6 +1242,8 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
       const { panBy: pan, zoomAt: zoom, tool: t } = live.current;
       if (brushing && cur.length === 1) {
         strokeMove(cur[0]);
+      } else if (selectingTouch && cur.length === 1) {
+        selMove(cur[0]);
       } else if (cur.length === 1 && prev.length === 1 && t === 'move') {
         pan(cur[0].x - prev[0].x, cur[0].y - prev[0].y);
       } else if (cur.length === 2 && prev.length === 2) {
@@ -1095,7 +1260,9 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
       prev = points(e);
       if (e.touches.length === 0) {
         if (brushing) strokeEnd(e.type === 'touchcancel');
+        if (selectingTouch) selEnd(e.type === 'touchcancel');
         brushing = false;
+        selectingTouch = false;
         owned = false;
         pinched = false;
       }
@@ -1167,7 +1334,7 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
     <div className="vs-viewer-wrap">
       <div
         ref={ref}
-        className={`vs-viewer ${className}${view.z > 1 ? ' is-zoomed' : ''}${tool !== 'move' ? ' is-brush' : ''}`}
+        className={`vs-viewer ${className}${view.z > 1 ? ' is-zoomed' : ''}${tool !== 'move' ? ' is-brush' : ''}${panOnly ? ' is-pan' : ''}`}
         tabIndex={0}
         role="img"
         aria-label={`${label}. Pinch or scroll to zoom${tool === 'move' ? ', drag to move' : ', drag to paint'}. Plus and minus zoom, 0 resets.`}
@@ -1186,7 +1353,12 @@ function Viewer({ src, edits, showEdits, tool, brushSize, strength, onEdited, as
       >
         {fit.w > 0 && canvasVisible && <div ref={host} className="vs-layer" style={layerStyle} />}
         {fit.w > 0 && !canvasVisible && src && <img src={src} alt="" draggable={false} style={layerStyle} />}
-        {cursor && tool !== 'move' && (
+        {lassoPts && lassoPts.length > 1 && (
+          <svg className="vs-lasso" width={box.w} height={box.h} aria-hidden="true">
+            <polygon points={lassoPts.map((p) => `${p.x + box.w / 2},${p.y + box.h / 2}`).join(' ')} />
+          </svg>
+        )}
+        {cursor && (tool === 'smudge' || tool === 'erase') && (
           <div
             className="vs-cursor"
             aria-hidden="true"

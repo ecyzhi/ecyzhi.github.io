@@ -5,11 +5,16 @@
 //   into what surrounds them. It changes the source pixels.
 // - Eraser paints a mask. Masked areas trace as empty: no shapes, no lines,
 //   just the chosen background.
+// - Lasso and smart select erase a whole area at once: what you draw around,
+//   or the patch of similar colour you tap. Inverted, they erase everything
+//   else instead.
 
 export type BrushTool = 'smudge' | 'erase';
+export type EditTool = 'move' | BrushTool | 'lasso' | 'wand';
 
 /** Mask colour on screen. Only the mask's alpha matters for tracing. */
 export const MASK_TINT = 'rgb(255, 64, 129)';
+const TINT = [255, 64, 129];
 
 interface Snapshot {
   canvas: HTMLCanvasElement;
@@ -106,19 +111,8 @@ export class EditLayer {
       this.start = null;
       return false;
     }
-    const x = Math.max(0, Math.floor(x0));
-    const y = Math.max(0, Math.floor(y0));
-    const w = Math.min(this.width, Math.ceil(x1)) - x;
-    const h = Math.min(this.height, Math.ceil(y1)) - y;
-    const before = new ImageData(w, h);
-    for (let row = 0; row < h; row++) {
-      const from = ((y + row) * this.width + x) * 4;
-      before.data.set(this.start.data.subarray(from, from + w * 4), row * w * 4);
-    }
+    this.record(canvas, ctx, this.start, x0, y0, x1, y1);
     this.start = null;
-    this.undoStack.push({ canvas, x, y, before, after: ctx.getImageData(x, y, w, h) });
-    if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();
-    this.redoStack = [];
     if (done === 'erase') this.maskUsed = true;
     return true;
   }
@@ -168,6 +162,117 @@ export class EditLayer {
       }
     }
     return any ? out : null;
+  }
+
+  // ----- area selections -----
+
+  /** Erase inside (or, inverted, outside) a lasso drawn in layer pixels. */
+  lasso(points: { x: number; y: number }[], invert: boolean): boolean {
+    if (points.length < 3) return false;
+    const c = document.createElement('canvas');
+    c.width = this.width;
+    c.height = this.height;
+    const ctx = c.getContext('2d', { willReadFrequently: true })!;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (const p of points.slice(1)) ctx.lineTo(p.x, p.y);
+    ctx.closePath();
+    ctx.fill();
+    const a = ctx.getImageData(0, 0, this.width, this.height).data;
+    const sel = new Uint8Array(this.width * this.height);
+    for (let i = 0; i < sel.length; i++) sel[i] = a[i * 4 + 3] >= 128 ? 1 : 0;
+    return this.eraseSelection(sel, invert);
+  }
+
+  /**
+   * Smart select: the connected patch around (x, y) whose colour is within
+   * `tolerance` (0–100) of the tapped pixel. Erases it, or everything else.
+   */
+  wand(x: number, y: number, tolerance: number, invert: boolean): boolean {
+    const w = this.width;
+    const h = this.height;
+    const sx = Math.floor(x);
+    const sy = Math.floor(y);
+    if (sx < 0 || sy < 0 || sx >= w || sy >= h) return false;
+    const d = this.sctx.getImageData(0, 0, w, h).data;
+    const seed = (sy * w + sx) * 4;
+    const [r0, g0, b0, a0] = [d[seed], d[seed + 1], d[seed + 2], d[seed + 3]];
+    const lim = (tolerance / 100) * 255 * 1.2;
+    const lim2 = lim * lim * 3;
+    const near = (i: number) => {
+      const o = i * 4;
+      const dr = d[o] - r0;
+      const dg = d[o + 1] - g0;
+      const db = d[o + 2] - b0;
+      const da = d[o + 3] - a0;
+      return dr * dr + dg * dg + db * db + da * da <= lim2;
+    };
+    const sel = new Uint8Array(w * h);
+    const stack = new Int32Array(w * h);
+    let sp = 0;
+    stack[sp++] = sy * w + sx;
+    sel[sy * w + sx] = 1;
+    while (sp > 0) {
+      const p = stack[--sp];
+      const px = p % w;
+      const nb = [px > 0 ? p - 1 : -1, px < w - 1 ? p + 1 : -1, p >= w ? p - w : -1, p < w * (h - 1) ? p + w : -1];
+      for (const q of nb) {
+        if (q >= 0 && !sel[q] && near(q)) {
+          sel[q] = 1;
+          stack[sp++] = q;
+        }
+      }
+    }
+    return this.eraseSelection(sel, invert);
+  }
+
+  private eraseSelection(sel: Uint8Array, invert: boolean): boolean {
+    const w = this.width;
+    const h = this.height;
+    const start = this.mctx.getImageData(0, 0, w, h);
+    const next = new ImageData(new Uint8ClampedArray(start.data), w, h);
+    const m = next.data;
+    let x0 = w;
+    let y0 = h;
+    let x1 = -1;
+    let y1 = -1;
+    for (let i = 0; i < sel.length; i++) {
+      if (!sel[i] === !invert) continue; // keep: not selected (or selected, when inverted)
+      const o = i * 4;
+      if (m[o + 3] === 255) continue; // already erased
+      m[o] = TINT[0];
+      m[o + 1] = TINT[1];
+      m[o + 2] = TINT[2];
+      m[o + 3] = 255;
+      const x = i % w;
+      const y = (i - x) / w;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+    if (x1 < 0) return false;
+    this.mctx.putImageData(next, 0, 0);
+    this.record(this.mask, this.mctx, start, x0, y0, x1 + 1, y1 + 1);
+    this.maskUsed = true;
+    return true;
+  }
+
+  /** Push an undo step for the changed box, given the full image from before. */
+  private record(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, start: ImageData, x0: number, y0: number, x1: number, y1: number) {
+    const x = Math.max(0, Math.floor(x0));
+    const y = Math.max(0, Math.floor(y0));
+    const w = Math.min(this.width, Math.ceil(x1)) - x;
+    const h = Math.min(this.height, Math.ceil(y1)) - y;
+    if (w <= 0 || h <= 0) return;
+    const before = new ImageData(w, h);
+    for (let row = 0; row < h; row++) {
+      const from = ((y + row) * this.width + x) * 4;
+      before.data.set(start.data.subarray(from, from + w * 4), row * w * 4);
+    }
+    this.undoStack.push({ canvas, x, y, before, after: ctx.getImageData(x, y, w, h) });
+    if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift();
+    this.redoStack = [];
   }
 
   // ----- brushes -----
