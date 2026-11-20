@@ -6,7 +6,15 @@ import '../shared/tool.css';
 import './pixelate.css';
 
 type Mode = 'whole' | 'brush';
-type Tool = 'paint' | 'erase';
+type EditTool = 'move' | 'paint' | 'erase';
+type Show = 'result' | 'original';
+
+const BRUSH_ICON = 'M18.4 2.6a2 2 0 0 1 2.9 2.9L12 14.8 9.2 12zM9 14.5c-1.7 0-3 1.3-3 3 0 1.2-.8 2.2-2 2.5 1 .7 2.2 1 3.5 1 2.5 0 4.5-2 4.5-4.5z';
+const TOOLS: { value: EditTool; label: string; title: string; icon: string }[] = [
+  { value: 'move', label: 'Move', title: 'Move and zoom', icon: 'M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3' },
+  { value: 'paint', label: 'Brush', title: 'Paint pixelation', icon: BRUSH_ICON },
+  { value: 'erase', label: 'Erase', title: 'Erase pixelation', icon: 'M20 20H8.5L3.6 15.1a2 2 0 0 1 0-2.8L13 2.9a2 2 0 0 1 2.8 0l4.3 4.3a2 2 0 0 1 0 2.8L11 19M9 9l7 7' },
+];
 
 /** zoom 1 = image fits the stage; ox, oy = image centre offset from stage centre, in stage px. */
 interface View {
@@ -47,18 +55,20 @@ export default function Pixelate() {
   const [img, setImg] = useState<LoadedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>('whole');
-  const [tool, setTool] = useState<Tool>('paint');
+  const [tool, setTool] = useState<EditTool>('paint');
   const [block, setBlock] = useState(12);
   const [brush, setBrush] = useState(80);
   const [view, setView] = useState<View>(FIT);
   const [stage, setStage] = useState({ w: 0, h: 0 });
   const [hist, setHist] = useState({ undo: 0, redo: 0, brushed: false });
-  const [compare, setCompare] = useState(false);
+  const [show, setShow] = useState<Show>('result');
+  const [full, setFull] = useState(false);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [panning, setPanning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [shareable, setShareable] = useState(false);
 
+  const cardRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engine = useRef<Pixelator | null>(null);
@@ -74,9 +84,12 @@ export default function Pixelate() {
   const scale = fit * view.zoom;
   const maxZoom = Math.max(4, 24 / fit); // up to 24 screen px per image pixel
 
+  // Whole-image mode and the Original tab only move and zoom.
+  const activeTool: EditTool = mode === 'whole' || show === 'original' ? 'move' : tool;
+
   // Latest values for the native listeners and the draw loop.
-  const live = useRef({ view, stage, scale, fit, maxZoom, mode, tool, brush, compare });
-  live.current = { view, stage, scale, fit, maxZoom, mode, tool, brush, compare };
+  const live = useRef({ view, stage, scale, fit, maxZoom, mode, activeTool, brush, show });
+  live.current = { view, stage, scale, fit, maxZoom, mode, activeTool, brush, show };
 
   useEffect(() => setShareable(canShareFiles()), []);
 
@@ -122,7 +135,7 @@ export default function Pixelate() {
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const p = engine.current;
-    const { stage: st, view: v, scale: s, compare: cmp } = live.current;
+    const { stage: st, view: v, scale: s, show: sh } = live.current;
     if (!canvas || !p || !st.w) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     const cw = Math.round(st.w * dpr);
@@ -140,7 +153,7 @@ export default function Pixelate() {
     ctx.imageSmoothingQuality = 'high';
     const dw = p.w * s;
     const dh = p.h * s;
-    ctx.drawImage(cmp ? p.source : p.result, st.w / 2 + v.ox - dw / 2, st.h / 2 + v.oy - dh / 2, dw, dh);
+    ctx.drawImage(sh === 'original' ? p.source : p.result, st.w / 2 + v.ox - dw / 2, st.h / 2 + v.oy - dh / 2, dw, dh);
   }, []);
 
   /** Redraws on the next frame; `recompose` also rebuilds the result image first. */
@@ -174,7 +187,30 @@ export default function Pixelate() {
   }, [img, block, schedule]);
 
   useEffect(() => schedule(true), [mode, schedule]);
-  useEffect(() => schedule(false), [view, stage, compare, schedule]);
+  useEffect(() => schedule(false), [view, stage, show, schedule]);
+
+  useEffect(() => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    const onChange = () => {
+      if (!(document.fullscreenElement ?? doc.webkitFullscreenElement)) setFull(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFull(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+  useEffect(() => {
+    // Stop the page behind the overlay from scrolling.
+    document.documentElement.classList.toggle('px-noscroll', full);
+    return () => document.documentElement.classList.remove('px-noscroll');
+  }, [full]);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
 
   // ----- view -----
@@ -217,7 +253,7 @@ export default function Pixelate() {
     const p = engine.current;
     if (!p) return;
     const pt = toImage(x, y);
-    const s: Stroke = { kind: live.current.tool, r: live.current.brush / 2, pts: [pt.x, pt.y] };
+    const s: Stroke = { kind: live.current.activeTool === 'erase' ? 'erase' : 'paint', r: live.current.brush / 2, pts: [pt.x, pt.y] };
     current.current = s;
     strokes.current.push(s);
     redoStack.current = [];
@@ -298,7 +334,7 @@ export default function Pixelate() {
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === 'touch' || drag.current) return;
     const pt = local(e);
-    const pan = live.current.mode === 'whole' || e.button === 1 || e.button === 2 || space.current;
+    const pan = live.current.activeTool === 'move' || e.button === 1 || e.button === 2 || space.current;
     if (!pan && e.button !== 0) return;
     e.preventDefault();
     try {
@@ -354,7 +390,7 @@ export default function Pixelate() {
       const cur = points(e);
       const h = handlers.current;
       if (cur.length === 1 && state === null) {
-        if (live.current.mode === 'brush') {
+        if (live.current.activeTool !== 'move') {
           state = 'paint';
           h.beginStroke(cur[0].x, cur[0].y);
           setCursor(cur[0]);
@@ -522,56 +558,176 @@ export default function Pixelate() {
     }
   };
 
+
+  // ----- full screen: the real Fullscreen API where there is one, a fixed overlay elsewhere (iPhone Safari) -----
+
+  const toggleFull = async () => {
+    const el = cardRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
+    const doc = document as Document & { webkitExitFullscreen?: () => Promise<void>; webkitFullscreenElement?: Element };
+    const cur = document.fullscreenElement ?? doc.webkitFullscreenElement;
+    if (full) {
+      if (cur) await (document.exitFullscreen?.() ?? doc.webkitExitFullscreen?.());
+      setFull(false);
+      return;
+    }
+    setFull(true);
+    try {
+      if (el?.requestFullscreen) await el.requestFullscreen();
+      else if (el?.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    } catch {
+      /* the overlay still works */
+    }
+  };
+
   const disabled = !img;
   const brushMode = mode === 'brush';
   const ring = Math.max(4, brush * scale);
   const sliderLog = (v: number) => Math.log(v);
+  const painting = activeTool !== 'move';
+  const fullIcon = full ? 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5' : 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5';
+
+  const pickTool = (t: EditTool) => {
+    setTool(t);
+    if (t !== 'move') {
+      setMode('brush');
+      setShow('result');
+    }
+  };
+
+  const hint = show === 'original'
+    ? 'original image · pinch or scroll to zoom'
+    : painting
+      ? `drag to ${activeTool === 'erase' ? 'erase' : 'paint'} · two fingers, right-drag or Space to move`
+      : 'drag to move · pinch or scroll to zoom';
+
+  const intensity = (id: string, mini: boolean) => (
+    <input
+      id={id}
+      type="range"
+      min={sliderLog(range.blockMin)}
+      max={sliderLog(range.blockMax)}
+      step={0.01}
+      disabled={disabled}
+      value={sliderLog(block)}
+      aria-label={mini ? 'Intensity' : undefined}
+      aria-valuetext={`${block} pixel blocks`}
+      onChange={(e) => setBlock(Math.round(Math.exp(Number(e.target.value))))}
+    />
+  );
 
   return (
     <div className="px">
-      <div className="px-stage-card">
+      <div ref={cardRef} className={`px-stage-card${full ? ' is-full' : ''}`}>
         {img && eng ? (
           <>
-            <div
-              ref={stageRef}
-              className={`px-stage checker${brushMode && !panning ? ' is-brush' : ''}${panning ? ' is-panning' : ''}`}
-              tabIndex={0}
-              role="application"
-              aria-label={
-                brushMode
-                  ? 'Image. Drag to paint pixelation. Right-drag, Space and drag, or two fingers to move. Scroll or pinch to zoom.'
-                  : 'Image. Drag to move, scroll or pinch to zoom. Arrow keys move, plus and minus zoom, 0 fits.'
-              }
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              onPointerLeave={() => setCursor(null)}
-              onContextMenu={(e) => e.preventDefault()}
-              onKeyDown={onStageKey}
-            >
-              <canvas ref={canvasRef} />
-              {brushMode && cursor && !panning && (
-                <div className="px-cursor" style={{ width: ring, height: ring, left: cursor.x - ring / 2, top: cursor.y - ring / 2 }} />
-              )}
-              {compare && <div className="px-badge mono">original</div>}
+            <div className="px-toolbar">
+              <div className="px-seg px-seg-sm" role="group" aria-label="Preview">
+                <button type="button" aria-pressed={show === 'result'} onClick={() => setShow('result')}>
+                  Pixelated
+                </button>
+                <button type="button" aria-pressed={show === 'original'} onClick={() => setShow('original')}>
+                  Original
+                </button>
+              </div>
+              <button
+                type="button"
+                className="px-icon-btn px-full-btn"
+                aria-label={full ? 'Exit full screen' : 'Full screen'}
+                title={full ? 'Exit full screen (Esc)' : 'Full screen'}
+                onClick={toggleFull}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={fullIcon} /></svg>
+              </button>
             </div>
-            <div className="px-meta mono">
-              <span className="px-file" title={img.name}>
-                {img.name} · {eng.w} × {eng.h}
-                {eng.scaled ? ` (from ${img.width} × ${img.height})` : ''}
-              </span>
+
+            <div className="px-viewer-wrap">
+              <div
+                ref={stageRef}
+                className={`px-stage checker${painting && !panning ? ' is-brush' : ''}${panning ? ' is-panning' : ''}`}
+                tabIndex={0}
+                role="application"
+                aria-label={`${show === 'original' ? 'Original image' : 'Pixelated image'}. ${hint}. Arrow keys move, plus and minus zoom, 0 fits.`}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+                onPointerLeave={() => setCursor(null)}
+                onContextMenu={(e) => e.preventDefault()}
+                onKeyDown={onStageKey}
+              >
+                <canvas ref={canvasRef} />
+                {painting && cursor && !panning && (
+                  <div className="px-cursor" style={{ width: ring, height: ring, left: cursor.x - ring / 2, top: cursor.y - ring / 2 }} />
+                )}
+              </div>
               <div className="px-zoom">
                 <button type="button" aria-label="Zoom out" onClick={() => zoomAt(0, 0, 1 / 1.25)}>
                   −
                 </button>
-                <button type="button" aria-label="Fit to view" title="Fit to view" onClick={() => setView(FIT)}>
+                <button type="button" className="mono" aria-label="Fit to view" title="Fit to view" onClick={() => setView(FIT)}>
                   {Math.round(scale * 100)}%
                 </button>
                 <button type="button" aria-label="Zoom in" onClick={() => zoomAt(0, 0, 1.25)}>
                   +
                 </button>
               </div>
+            </div>
+
+            <div className="px-edit" role="group" aria-label="Edit tools">
+              <div className="px-seg px-tools">
+                {TOOLS.map((t) => (
+                  <button key={t.value} type="button" aria-pressed={activeTool === t.value} onClick={() => pickTool(t.value)} title={t.title}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d={t.icon} />
+                    </svg>
+                    <span>{t.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="px-history">
+                <button type="button" className="px-icon-btn" aria-label="Undo" title="Undo (Ctrl+Z)" disabled={!hist.undo} onClick={undo}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
+                </button>
+                <button type="button" className="px-icon-btn" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={!hist.redo} onClick={redo}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5" /><path d="M20 9H9a5 5 0 0 0 0 10h3" /></svg>
+                </button>
+                <button type="button" className="px-chip" disabled={!hist.brushed} onClick={clearBrush}>
+                  Clear brush
+                </button>
+              </div>
+              <div className="px-brush">
+                {brushMode && (
+                  <label className="px-mini">
+                    <span className="mono">size</span>
+                    <input
+                      type="range"
+                      min={sliderLog(range.brushMin)}
+                      max={sliderLog(range.brushMax)}
+                      step={0.01}
+                      value={sliderLog(brush)}
+                      aria-label="Brush size"
+                      aria-valuetext={`${brush} pixels`}
+                      onChange={(e) => setBrush(Math.round(Math.exp(Number(e.target.value))))}
+                    />
+                    <span className="mono px-mini-val">{brush}</span>
+                  </label>
+                )}
+                {full && (
+                  <label className="px-mini">
+                    <span className="mono">intensity</span>
+                    {intensity('px-block-mini', true)}
+                    <span className="mono px-mini-val">{block}</span>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div className="px-meta mono">
+              <span className="px-file" title={img.name}>
+                {img.name} · {eng.w} × {eng.h}
+                {eng.scaled ? ` (from ${img.width} × ${img.height})` : ''}
+              </span>
+              <span className="px-hint">{hint}</span>
             </div>
           </>
         ) : (
@@ -589,11 +745,14 @@ export default function Pixelate() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M4 12h16M12 4v16" /></svg>
               Whole image
             </button>
-            <button type="button" aria-pressed={mode === 'brush'} onClick={() => setMode('brush')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18.4 2.6a2 2 0 0 1 2.9 2.9L12 14.8 9.2 12z" /><path d="M9 14.5c-1.7 0-3 1.3-3 3 0 1.2-.8 2.2-2 2.5 1 .7 2.2 1 3.5 1 2.5 0 4.5-2 4.5-4.5z" /></svg>
+            <button type="button" aria-pressed={mode === 'brush'} onClick={() => pickTool(tool === 'move' ? 'paint' : tool)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={BRUSH_ICON} /></svg>
               Brush
             </button>
           </div>
+          <p className="px-help">
+            {brushMode ? 'Paint over the parts to hide, like faces, plates or names. Brush and Erase sit under the image.' : 'Every part of the image is pixelated.'}
+          </p>
         </fieldset>
 
         <div className="px-field">
@@ -601,97 +760,12 @@ export default function Pixelate() {
             <span>intensity</span>
             <span className="px-val">{block} px blocks</span>
           </label>
-          <input
-            id="px-block"
-            type="range"
-            min={sliderLog(range.blockMin)}
-            max={sliderLog(range.blockMax)}
-            step={0.01}
-            disabled={disabled}
-            value={sliderLog(block)}
-            aria-valuetext={`${block} pixel blocks`}
-            onChange={(e) => setBlock(Math.round(Math.exp(Number(e.target.value))))}
-          />
+          {intensity('px-block', false)}
           <div className="px-scale mono" aria-hidden="true">
             <span>subtle</span>
             <span>strong</span>
           </div>
         </div>
-
-        {brushMode && (
-          <>
-            <fieldset className="px-field" disabled={disabled}>
-              <legend className="px-label mono">brush</legend>
-              <div className="px-seg">
-                <button type="button" aria-pressed={tool === 'paint'} onClick={() => setTool('paint')}>
-                  Paint
-                </button>
-                <button type="button" aria-pressed={tool === 'erase'} onClick={() => setTool('erase')}>
-                  Erase
-                </button>
-              </div>
-            </fieldset>
-
-            <div className="px-field">
-              <label htmlFor="px-brush" className="px-label mono px-row">
-                <span>brush size</span>
-                <span className="px-val">{brush} px</span>
-              </label>
-              <input
-                id="px-brush"
-                type="range"
-                min={sliderLog(range.brushMin)}
-                max={sliderLog(range.brushMax)}
-                step={0.01}
-                disabled={disabled}
-                value={sliderLog(brush)}
-                aria-valuetext={`${brush} pixels`}
-                onChange={(e) => setBrush(Math.round(Math.exp(Number(e.target.value))))}
-              />
-            </div>
-
-            <div className="px-history">
-              <button type="button" className="btn btn-ghost" disabled={disabled || !hist.undo} onClick={undo} title="Undo (Ctrl+Z)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></svg>
-                Undo
-              </button>
-              <button type="button" className="btn btn-ghost" disabled={disabled || !hist.redo} onClick={redo} title="Redo (Ctrl+Shift+Z)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5" /><path d="M20 9H9a5 5 0 0 0 0 10h3" /></svg>
-                Redo
-              </button>
-              <button type="button" className="btn btn-ghost" disabled={disabled || !hist.brushed} onClick={clearBrush}>
-                Clear
-              </button>
-            </div>
-            {img && !hist.brushed && <p className="px-note">Paint over the parts you want to hide, like faces, plates or names.</p>}
-          </>
-        )}
-
-        <button
-          type="button"
-          className="btn btn-ghost px-compare"
-          disabled={disabled}
-          aria-pressed={compare}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            setCompare(true);
-          }}
-          onPointerUp={() => setCompare(false)}
-          onPointerLeave={() => setCompare(false)}
-          onPointerCancel={() => setCompare(false)}
-          onKeyDown={(e) => {
-            if (e.key === ' ' || e.key === 'Enter') {
-              e.preventDefault();
-              setCompare(true);
-            }
-          }}
-          onKeyUp={() => setCompare(false)}
-          onBlur={() => setCompare(false)}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
-          Hold to see original
-        </button>
 
         <div className="px-result">
           <div className="px-result-name">{img ? fileName : 'No image yet'}</div>
