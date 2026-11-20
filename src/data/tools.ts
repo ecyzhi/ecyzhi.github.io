@@ -1,4 +1,4 @@
-export type ToolIcon = 'circle' | 'vector' | 'collage' | 'json' | 'jwt' | 'encode' | 'clock' | 'loan';
+export type ToolIcon = 'circle' | 'vector' | 'collage' | 'json' | 'jwt' | 'encode' | 'clock' | 'loan' | 'pixel';
 
 export interface Tool {
   slug: string;
@@ -21,6 +21,7 @@ export const tools: Tool[] = [
   { slug: 'circle-crop', name: 'Circle crop', blurb: 'Crop to a circle or oval, export a transparent PNG.', category: 'Media', icon: 'circle', live: true, featured: true },
   { slug: 'image-to-svg', name: 'Image to SVG', blurb: 'Trace photos and drawings into clean vectors.', category: 'Media', icon: 'vector', live: true, featured: true },
   { slug: 'collage', name: 'Collage maker', blurb: 'Arrange photos in templates, or draw your own.', category: 'Media', icon: 'collage', live: true, featured: true },
+  { slug: 'pixelate', name: 'Pixelate', blurb: 'Pixelate a whole image, or brush over faces and details.', category: 'Media', icon: 'pixel', live: true },
   { slug: 'json', name: 'JSON tools', blurb: 'Format, validate, minify and explore as a tree.', category: 'Developer', icon: 'json', live: true, featured: true },
   { slug: 'jwt', name: 'JWT decoder', blurb: 'See a token’s header, payload and expiry.', category: 'Developer', icon: 'jwt', live: true },
   { slug: 'encode', name: 'Encode & decode', blurb: 'Base64, URL and HTML entities, both ways.', category: 'Developer', icon: 'encode', live: true },

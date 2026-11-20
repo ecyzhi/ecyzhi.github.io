@@ -1,0 +1,296 @@
+.px {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.px-stage-card {
+  flex: 999 1 560px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.px-stage,
+.px-empty {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.px-stage {
+  touch-action: none;
+  outline-offset: 2px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.px-stage:active,
+.px-stage.is-panning {
+  cursor: grabbing;
+}
+.px-stage.is-brush {
+  cursor: none;
+}
+
+/* Brush ring sits on top of the user's image, so it keeps fixed colours. */
+.px-cursor {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+.px-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: rgba(13, 14, 17, 0.8);
+  color: #ecedef;
+  pointer-events: none;
+}
+.px-stage canvas {
+  touch-action: none;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.px-empty {
+  background: var(--surface-2);
+}
+
+.px-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--faint);
+  padding: 0 4px;
+}
+.px-file {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.px-panel {
+  flex: 1 1 300px;
+  min-width: 0; /* long file names truncate instead of widening the panel */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.px-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.px-field:disabled {
+  opacity: 0.55;
+}
+
+.px-label {
+  display: block;
+  font-size: 12px;
+  color: var(--faint);
+  margin-bottom: 10px;
+  padding: 0;
+}
+.px-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.px-val {
+  color: var(--text);
+}
+
+.px-seg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: var(--radius);
+}
+.px-seg button {
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.px-seg button[aria-pressed='true'] {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.px-seg button:disabled {
+  cursor: not-allowed;
+}
+
+.px-panel input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 28px;
+  margin: 0;
+}
+.px-panel input[type='range']:disabled {
+  opacity: 0.45;
+}
+
+
+
+.px-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+.px-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+.px-history {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.px-history .btn,
+.px-compare {
+  min-height: 44px;
+  font-size: 14px;
+  gap: 6px;
+}
+.px-history .btn {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.px-compare {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.px-note {
+  margin: -8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.px-zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.px-zoom button {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.px-zoom button:hover {
+  border-color: var(--muted);
+  color: var(--text);
+}
+
+.px-result-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  min-width: 0;
+}
+.px-result-name {
+  color: var(--text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.px-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.px-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.px-secondary .btn {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.px-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .px-stage,
+  .px-empty {
+    aspect-ratio: 1 / 1;
+  }
+  .px-stage-card {
+    padding: 8px;
+  }
+  .px-panel {
+    padding: 16px;
+  }
+}
+
+/* Fixed panel width on wide screens, so the preview keeps its size. */
+@media (min-width: 1000px) {
+  .px-panel {
+    flex: 0 0 340px;
+  }
+}
