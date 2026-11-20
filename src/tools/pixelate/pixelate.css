@@ -17,6 +17,13 @@
   gap: 12px;
 }
 
+@media (min-width: 900px) {
+  .px-stage-card {
+    position: sticky;
+    top: 84px;
+  }
+}
+
 .px-stage,
 .px-empty {
   position: relative;
@@ -49,17 +56,6 @@
   border-radius: 50%;
   border: 1.5px solid #fff;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(0, 0, 0, 0.6);
-}
-.px-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  background: rgba(13, 14, 17, 0.8);
-  color: #ecedef;
-  pointer-events: none;
 }
 .px-stage canvas {
   touch-action: none;
@@ -189,56 +185,8 @@
   margin-top: 2px;
 }
 
-.px-history {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.px-history .btn,
-.px-compare {
-  min-height: 44px;
-  font-size: 14px;
-  gap: 6px;
-}
-.px-history .btn {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-.px-compare {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: none;
-}
 
-.px-note {
-  margin: -8px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--muted);
-}
 
-.px-zoom {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.px-zoom button {
-  min-width: 36px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text-2);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-.px-zoom button:hover {
-  border-color: var(--muted);
-  color: var(--text);
-}
 
 .px-result-text {
   font-size: 13px;
@@ -293,4 +241,177 @@
   .px-panel {
     flex: 0 0 340px;
   }
+}
+
+/* Preview tabs and full screen button above the image */
+.px-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.px-seg-sm {
+  display: inline-grid;
+  width: auto;
+}
+.px-seg-sm button {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.px-icon-btn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.px-icon-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+/* Zoom controls over the image */
+.px-viewer-wrap {
+  position: relative;
+}
+.px-zoom {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  background: var(--overlay-bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.px-zoom button {
+  min-width: 44px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+}
+.px-zoom button.mono {
+  font-size: 12px;
+  min-width: 56px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.px-zoom button:hover {
+  background: var(--surface-2);
+}
+
+/* Edit tools under the image */
+.px-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+.px-tools {
+  flex: 1 1 260px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.px-tools button {
+  height: 40px;
+  font-size: 13px;
+  gap: 6px;
+  padding: 0 4px;
+  min-width: 0;
+}
+.px-history {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.px-chip {
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+.px-icon-btn:disabled,
+.px-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.px-brush {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  width: 100%;
+}
+.px-brush:empty {
+  display: none;
+}
+.px-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 200px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.px-mini input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  height: 28px;
+  margin: 0;
+}
+.px-mini-val {
+  min-width: 3ch;
+  text-align: right;
+  color: var(--text);
+}
+.px-help {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .px-hint {
+    display: none;
+  }
+}
+
+/* Full screen (real, or a fixed overlay where the API is missing) */
+.px-stage-card.is-full,
+.px-stage-card:fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  border-radius: 0;
+  border: 0;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background: var(--surface);
+  overflow-y: auto;
+}
+.px-stage-card.is-full .px-viewer-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.px-stage-card.is-full .px-stage {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+  min-height: 200px;
+}
+html.px-noscroll,
+html.px-noscroll body {
+  overflow: hidden;
 }
