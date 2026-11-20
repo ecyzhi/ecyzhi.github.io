@@ -4,21 +4,36 @@ interface Props {
   onFile: (file: File) => void;
   error?: string | null;
   hint?: string;
+  /** File picker filter. */
+  accept?: string;
+  /** MIME type prefixes taken from a paste or drop, e.g. ['image/', 'video/']. */
+  kinds?: string[];
+  title?: string;
+  button?: string;
 }
 
 /** File picker that also takes drag-and-drop and pasted images. */
-export default function DropZone({ onFile, error, hint = 'JPG, PNG, WebP or GIF' }: Props) {
+export default function DropZone({
+  onFile,
+  error,
+  hint = 'JPG, PNG, WebP or GIF',
+  accept = 'image/*',
+  kinds = ['image/'],
+  title = 'Drop an image here',
+  button = 'Choose image',
+}: Props) {
+  const wanted = (f: File) => kinds.some((k) => f.type.startsWith(k));
   const inputRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
 
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
-      const file = Array.from(e.clipboardData?.files ?? []).find((f) => f.type.startsWith('image/'));
+      const file = Array.from(e.clipboardData?.files ?? []).find(wanted);
       if (file) onFile(file);
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, [onFile]);
+  }, [onFile, kinds.join()]);
 
   return (
     <div
@@ -31,7 +46,7 @@ export default function DropZone({ onFile, error, hint = 'JPG, PNG, WebP or GIF'
       onDrop={(e) => {
         e.preventDefault();
         setOver(false);
-        const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/')) ?? e.dataTransfer.files[0];
+        const file = Array.from(e.dataTransfer.files).find(wanted) ?? e.dataTransfer.files[0];
         if (file) onFile(file);
       }}
     >
@@ -40,10 +55,10 @@ export default function DropZone({ onFile, error, hint = 'JPG, PNG, WebP or GIF'
         <circle cx="9" cy="9" r="2" />
         <path d="M21 15l-5-5L5 21" />
       </svg>
-      <p className="dz-title">Drop an image here</p>
+      <p className="dz-title">{title}</p>
       <p className="dz-sub">or paste one, or</p>
       <button type="button" className="btn btn-primary" onClick={() => inputRef.current?.click()}>
-        Choose image
+        {button}
       </button>
       <p className="dz-hint mono">{hint}</p>
       {error && (
@@ -54,7 +69,7 @@ export default function DropZone({ onFile, error, hint = 'JPG, PNG, WebP or GIF'
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         hidden
         onChange={(e) => {
           const file = e.target.files?.[0];
